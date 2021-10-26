@@ -1,10 +1,10 @@
-.. flow documentation master file, created by
-   sphinx-quickstart on Tue Oct 26 13:35:21 2021.
+.. teamflow documentation master file, created by
+   sphinx-quickstart on Tue Oct 26 14:23:45 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to flow's documentation!
-================================
+Welcome to teamflow's documentation!
+====================================
 
 .. toctree::
    :maxdepth: 2
