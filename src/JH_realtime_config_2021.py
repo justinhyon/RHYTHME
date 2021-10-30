@@ -12,13 +12,13 @@ import numpy as np
 # import multiprocessing.pool
 
 # insert path to directory where JH_offline_client.py is located
-path = '/Users/jasonhyon/Documents/GitHub/teamflow/Codes'
+path = '/Users/jasonhyon/Documents/GitHub/teamflow/src'
 sys.path.insert(1, path)
 from JH_realtime_client_2021 import TeamFlow
 
 # general configurations
-option = 'offline'
-savepath = '/Users/jasonhyon/Documents/GitHub/teamflow/merge_test/rt'
+option = 'realtime'
+savepath = '/Users/jasonhyon/Documents/GitHub/teamflow/misc/merge_test/rt'
 blocksize_sec = 5  # number of seconds per segment
 windowsize = 12  # size of the figures
 units = 'uv'  # v for volts, mv for millivolts, uv for microvolts, Mv for megavolts
@@ -30,6 +30,8 @@ badchans1 = ['A32', 'B2'] # bad channels
 badchans2 = []
 nchansparticipant = 128 #number of channels per particiapnt
 removefirstsample = True
+TrigChan = '256'  # python begins numbering from 0, so this is the channel number of the stim channel - 1 (not the name)
+numparticipants = 2
 
 # configurations for realtime mode (ignored in offline mode)
 exp_name = 'test_2'
@@ -37,11 +39,10 @@ dataport = 1972
 delay = .01  # how long to wait before checking again for new samples in the buffer
 
 # configurations for offline mode (ignored in realtime mode)
-filepath = '/Users/jasonhyon/Documents/GitHub/teamflow//JoinedData/170719_TRIAL2__EM_MD.set'  # path to the  bdf data file
+filepath = '/Users/jasonhyon/Desktop/JoinedData/170719_TRIAL2__EM_MD.set'  # path to the  bdf data file
 fsample = 256  # samples per second
 
 # ----------------aep configurations-----------------
-TrigChan = '256'  # python begins numbering from 0, so this is the channel number of the stim channel - 1 (not the name)
 # subject 1
 channelofint_aep1 = [1, 2, 3, 33, 34, 52, 65, 66, 87, 97, 98, 110, 111, 112]
 epoeventval1 = 5  # stim channel event value desired
@@ -83,7 +84,7 @@ channelofint_psdA2 = [244, 245, 247, 254] #[245, 246, 248, 255] actual channels 
 foillowA2 = 7
 foihighA2 = 11
 
-numparticipants = 2
+
 
 if __name__ == '__main__':
     TF = TeamFlow(path, savepath, dataport, windowsize, delay, plotpref, saving, TrigChan,)
