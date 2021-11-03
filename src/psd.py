@@ -29,6 +29,7 @@ def psd(raw, psd_list, chan, foilow, foihigh, fSamp):
 
     return psd_list
 
+
     # if self.plotpref != 'none':
     #     # format psd plot
     #     self.ax[x, y].text(0.1, .9, 'Average {0} Band PSD: {1}dB'.format(band, round(psd, 2)), ha='left', va='center',

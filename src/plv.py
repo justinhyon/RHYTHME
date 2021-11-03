@@ -1,14 +1,18 @@
+import numpy as np
+import mne
+
 def plv(raw, segment, blocksize, fsample, numblocks):
-    import numpy as np
-    import mne
+    # import numpy as np
+    # import mne
     from mne.connectivity import spectral_connectivity
 
     print("\nCalculating PLV:")
 
-    E, simlen = generate_sim_events(raw, segment, blocksize, fsample, numblocks)  # Replaces events with equally spaced dummy events to calculate PLV
-    epochs = mne.Epochs(raw, E, tmin=-(simlen/fsample)/2, tmax=(simlen/fsample)/2)
+    E, simlen = generate_sim_events(raw, segment, blocksize, fsample,
+                                    numblocks)  # Replaces events with equally spaced dummy events to calculate PLV
+    epochs = mne.Epochs(raw, E, tmin=-(simlen / fsample) / 2, tmax=(simlen / fsample) / 2)
 
-    # con, freqs, times, n_epochs, n_tapers = spectral_connectivity(epochs, method='plv', sfreq=self.fSamp, fmin=13.,
+    # con, freqs, times, n_epochs, n_tapers = spectral_connectivity(epochs, method='plv', sfreq=fSamp, fmin=13.,
     #                                                               fmax=50., n_jobs=6)
     con, freqs, times, n_epochs, n_tapers = spectral_connectivity(epochs, method='plv', sfreq=fsample, fmin=13.,
                                                                   fmax=50., n_jobs=1)
@@ -39,12 +43,13 @@ def plv(raw, segment, blocksize, fsample, numblocks):
     print("PLV value for inter-brain: ", plv2_mean)
     print("PLV value for intra-brain subject 2: ", plv3_mean)
 
-    return plv1_mean, plv2_mean, plv3_mean
+    return plv1_mean, plv2_mean, plv3_mean, con
+
 
 def generate_sim_events(raw, segment, blocksize, fsample, numblocks):
-    import numpy as np
+    # import numpy as np
     import math
-    import mne
+    # import mne
     from mne.io import RawArray
 
     # Length of a simulated event
@@ -70,37 +75,39 @@ def generate_sim_events(raw, segment, blocksize, fsample, numblocks):
 
     return E, sim_len
 
-    # if self.plotpref != 'none':
-    #     self.plv_plot(con)
 
-# def plv_plot(self, data):
-#     self.ax[1, 0].cla()  # clears the axes to prepare for new data
-#     self.ax[1, 1].cla()
-#     self.ax[1, 2].cla()
-#     self.ax[1, 3].cla()
-#
-#     # connectivity matrix
-#     self.ax[1, 0].axvline(x=data.shape[0] / 2, color='red')  # horizontal and vertical lines for quadrants
-#     self.ax[1, 0].hlines(int(data.shape[0] / 2), 0, data.shape[0], color='red')
-#     self.ax[1, 0].imshow(data)  # plots the data
-#
-#     # average PLV indexes
-#     x = np.arange(1, len(self.PLV_intra1) + 1)
-#     self.ax[1, 1].bar(x, self.PLV_intra1, width=0.4, color='red')  # index for plv intra 1
-#     self.ax[1, 2].bar(x, self.PLV_inter, width=0.4, color='blue')  # index for plv inter
-#     self.ax[1, 3].bar(x, self.PLV_intra2, width=0.4, color='green')  # index for plv intra 2
-#
-#     for i, v in enumerate(self.PLV_intra1):  # adds labels to bars
-#         if v != 0.:
-#             self.ax[1, 1].text(i + 1 - .2, v, str(round(v, 2)))
-#     for i, v in enumerate(self.PLV_inter):
-#         if v != 0.:
-#             self.ax[1, 2].text(i + 1 - .2, v, str(round(v, 2)))
-#     for i, v in enumerate(self.PLV_intra2):
-#         if v != 0.:
-#             self.ax[1, 3].text(i + 1 - .2, v, str(round(v, 2)))
-#
-#     self.ax[1, 0].set(title='Connectivity Matrix', xlabel='Channel #', ylabel='Channel #')
-#     self.ax[1, 1].set(title='PLV values for Subject 1', xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
-#     self.ax[1, 2].set(title='PLV Values for Inter-Brain', xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
-#     self.ax[1, 3].set(title='PLV Values for subject 2', xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
+def plv_plot(ax, con, PLV_intra1, PLV_inter, PLV_intra2):
+    data = con
+
+    ax[1, 0].cla()  # clears the axes to prepare for new data
+    ax[1, 1].cla()
+    ax[1, 2].cla()
+    ax[1, 3].cla()
+
+    # connectivity matrix
+    ax[1, 0].axvline(x=data.shape[0] / 2, color='red')  # horizontal and vertical lines for quadrants
+    ax[1, 0].hlines(int(data.shape[0] / 2), 0, data.shape[0], color='red')
+    ax[1, 0].imshow(data)  # plots the data
+
+    # average PLV indexes
+    x = np.arange(1, len(PLV_intra1) + 1)
+    ax[1, 1].bar(x, PLV_intra1, width=0.4, color='red')  # index for plv intra 1
+    ax[1, 2].bar(x, PLV_inter, width=0.4, color='blue')  # index for plv inter
+    ax[1, 3].bar(x, PLV_intra2, width=0.4, color='green')  # index for plv intra 2
+
+    for i, v in enumerate(PLV_intra1):  # adds labels to bars
+        if v != 0.:
+            ax[1, 1].text(i + 1 - .2, v, str(round(v, 2)))
+    for i, v in enumerate(PLV_inter):
+        if v != 0.:
+            ax[1, 2].text(i + 1 - .2, v, str(round(v, 2)))
+    for i, v in enumerate(PLV_intra2):
+        if v != 0.:
+            ax[1, 3].text(i + 1 - .2, v, str(round(v, 2)))
+
+    ax[1, 0].set(title='Connectivity Matrix', xlabel='Channel #', ylabel='Channel #')
+    ax[1, 1].set(title='PLV values for Subject 1', xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
+    ax[1, 2].set(title='PLV Values for Inter-Brain', xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
+    ax[1, 3].set(title='PLV Values for subject 2', xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
+
+    return ax
