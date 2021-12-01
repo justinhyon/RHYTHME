@@ -54,6 +54,8 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
                 # aep_plot(data=np.zeros(round((posttrig + pretrig) * fsample)), mode=mode)
                 terminate = True
 
+                dat = np.zeros((len(channelofint), int(np.round((pretrig * fsample) + (posttrig * fsample)))))
+
             if lastSamp > blocksize:
                 print("Event with value {} is at extreme end of segment. No calculation performed, marker added."
                       .format(epoeventval))
@@ -62,6 +64,8 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
                     aepxvallist.append(segment)
                 exE_AEPlist.append(segment)
                 terminate = True
+
+                dat = np.zeros((len(channelofint), int(np.round((pretrig * fsample) + (posttrig * fsample)))))
 
             if not terminate:
                 append_aep = True
@@ -102,6 +106,7 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
         if append_aep and len(mAEP1amp) > 0:
             aeplist.append(np.mean(mAEP1amp))
 
+        print('aepexblist for seg ', exB_AEPlist)
         return aeplist, aepxvallist, exB_AEPlist, exE_AEPlist, dat
 
     else:
@@ -110,7 +115,7 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
         print("\nno events with value", epoeventval, "found in this segment, AEP calculation not performed")
         aeplist.append(0.)
         aepxvallist.append(segment)
-        return aeplist, aepxvallist, exB_AEPlist, exE_AEPlist
+        return aeplist, aepxvallist, exB_AEPlist, exE_AEPlist, np.zeros((len(channelofint), int(np.round((pretrig * fsample) + (posttrig * fsample)))))
 
 
 
@@ -123,11 +128,11 @@ def aep_plot(ax, data, participant, fsample, aeplist, aepxvallist, exB_AEPlist, 
         y = 2
 
     AEPs = aeplist[participant]
-    print(AEPs)
+
     exB_AEPs = exB_AEPlist[participant]
     exE_AEPs = exE_AEPlist[participant]
     AEPxval = aepxvallist[participant]
-    print(AEPxval)
+
     pretrig = pretrig
     posttrig = posttrig
     # if narticipant == 1:
@@ -158,16 +163,11 @@ def aep_plot(ax, data, participant, fsample, aeplist, aepxvallist, exB_AEPlist, 
 
     # plots standard deviation if data is not 0
     if data.ndim > 1:
-        print(data)
-        print(dat)
-        print(data.shape)
-        print(dat.shape)
+
         sdAEPamp = data.std(axis=0)[:-1]
-        print(sdAEPamp.shape)
+
         dat = data.mean(axis=0)[:-1]
-        print(dat.shape)
-        print(x.shape)
-        print(fsample)
+
         ax[0, y].fill_between(x, dat + sdAEPamp, dat - sdAEPamp, facecolor='red', alpha=0.3)
 
     # plots the data against time
@@ -185,7 +185,7 @@ def aep_plot(ax, data, participant, fsample, aeplist, aepxvallist, exB_AEPlist, 
 
     # generate plot of all AEP peak indexes
     x = AEPxval
-    print(AEPs, len(x), len(AEPs))
+
     ax[0, y + 1].bar(x, AEPs, width=0.4)
     ax[0, y + 1].bar(exB_AEPs, .000001, width=0.2, alpha=.5)
     ax[0, y + 1].bar(exE_AEPs, -.000001, width=0.2, alpha=.5)

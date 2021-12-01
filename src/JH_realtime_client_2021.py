@@ -7,9 +7,10 @@ Created on Wed Jul  8 10:53:52 2020
 """
 
 import sys
-from psd import psd
+from psd import psd, psd_plot
 from plv import plv, plv_plot
 from aep import aep, aep_plot
+from teamflow import calculate_tmflow, teamflow_plot
 from mne_realtime.externals import FieldTrip
 import time
 import numpy as np
@@ -55,7 +56,7 @@ class TeamFlow:
 
     def master_control(self, filepath, badchans, fsample, nchansparticipant, trigchan, featurenames, channelofints,
                        foilows, foihighs, blocksize_sec, num_plvsimevents, aep_data, option, delay, units,
-                       remfirstsample, exp_name):
+                       remfirstsample, exp_name, n_skipped_segs, wait_segs):
         self.option = option
 
         if self.option == 'offline':
@@ -65,13 +66,14 @@ class TeamFlow:
         elif self.option == "realtime":
             self.realtime_process(delay, badchans, nchansparticipant, trigchan, featurenames, channelofints,
                                   foilows, foihighs, blocksize_sec, num_plvsimevents, aep_data, units, remfirstsample,
-                                  exp_name)
+                                  exp_name, n_skipped_segs, wait_segs)
         else:
             print('invalid setting option selected')
             sys.exit(1)
 
     def realtime_process(self, delay, badchans, nchansparticipant, trigchan, featurenames, channelofints,
-                         foilows, foihighs, blocksize_sec, num_plvsimevents, aep_data, units, remfirstsample, exp_name):
+                         foilows, foihighs, blocksize_sec, num_plvsimevents, aep_data, units, remfirstsample, exp_name,
+                         n_skipped_segs, wait_segs):
 
         '''
         numparticipants         number of participants
@@ -83,7 +85,7 @@ class TeamFlow:
         '''
         self.ftc = FieldTrip.Client()
 
-        self.prevsamp = 0
+        prevsamp = 0
 
         # if filepath.endswith('.bdf'):
         #     fullraw = read_raw_bdf(filepath, preload=True)
@@ -115,7 +117,7 @@ class TeamFlow:
         data_dict['Inter'] = []
 
         if self.plotpref != 'none':
-            fig, ax = self.setup_plotting()
+            fig, ax, fig2, ax2 = self.setup_plotting()
 
         print("REALTIME ANALYSIS MODE")
         print("Waiting for first data segment from port: ", self.dataport)
@@ -131,19 +133,24 @@ class TeamFlow:
                 blocksize = round(blocksize_sec * fsample)
                 currentsamp = H.nSamples
 
-                if H.nSamples == self.prevsamp + blocksize:
+                if H.nSamples == prevsamp + blocksize:
                     initial_wait = False
                     break
+                elif (currentsamp - 1 - prevsamp) <= (blocksize * (n_skipped_segs + 1)) and \
+                        (H.nSamples - prevsamp) / blocksize in range(1, n_skipped_segs + 2):
+                        print('\nCAUTION: SEGMENT SKIPPED')
+                        prevsamp = prevsamp + blocksize
+                        break
                 else:
                     time.sleep(delay)
                     if not initial_wait:
                         wait_time += 1
-                    if wait_time > blocksize_sec * (1 / delay):
+                    if wait_time > wait_segs * blocksize_sec * (1 / delay):
                         loop = False
                         print("\n", "-" * 60)
                         print("\nEXPERIMENT ENDED: After {0} seconds, not enough data was received to fill one block. "
                               "Number of unprocessed samples: {1}"
-                              .format(blocksize_sec, H.nSamples - self.prevsamp))
+                              .format(blocksize_sec * wait_segs, H.nSamples - prevsamp))
                         break
 
             # Check presence of header
@@ -159,22 +166,22 @@ class TeamFlow:
             time1 = timer()
             time3 = timer()
 
-            # if currentsamp != self.prevsamp + blocksize:
-            #     print('received inconsistent number of samples: {}. experiment ending'.format(currentsamp - self.prevsamp))
+            # if currentsamp != prevsamp + blocksize:
+            #     print('received inconsistent number of samples: {}. experiment ending'.format(currentsamp - prevsamp))
             #     loop = False
 
             if loop:
                 print("\n", "-" * 60)
                 print('\nCONNECTED: Header retrieved for segment: ' + str(self.segment))
-                print("Trying to read from sample {0} to {1}. Samples per block: {2}".format(self.prevsamp,
+                print("Trying to read from sample {0} to {1}. Samples per block: {2}".format(prevsamp,
                                                                                              currentsamp - 1,
                                                                                              blocksize))
                 print("Total Samples Received = {}".format(currentsamp))
 
                 segmentdata = self.ftc.getData(
-                    index=(self.prevsamp, currentsamp - 1)).transpose()  # receive data from buffer
+                    index=(prevsamp, currentsamp - 1)).transpose()  # receive data from buffer
 
-                self.prevsamp = currentsamp
+                prevsamp = currentsamp
 
                 print('Samples retrieved for segment: ' + str(self.segment))
                 print('Data shape (nChannels, nSamples): {}'.format(segmentdata.shape))
@@ -191,8 +198,8 @@ class TeamFlow:
                     participant_data.append(segmentdata[int(idx):idx + nchansparticipant, :])
                     idx += nchansparticipant
 
-                # D1 = fulldata[0:128, self.prevsamp:currentsamp]
-                # D2 = fulldata[128:256, self.prevsamp:currentsamp]
+                # D1 = fulldata[0:128, prevsamp:currentsamp]
+                # D2 = fulldata[128:256, prevsamp:currentsamp]
 
                 participant_raws = []
                 for i, participant in enumerate(participant_data):
@@ -228,8 +235,7 @@ class TeamFlow:
                 self.stim_idx = self.TrigChan
                 self.stim_values = stimvals
                 print('STIM CHANNEL: ', self.stim_idx, self.stim_values)
-                if 5 in self.stim_values:
-                    print("YEETYEET")
+
 
                 # Extract features
                 ################## PSDs #################################################
@@ -238,7 +244,23 @@ class TeamFlow:
                 for idx, chans in enumerate(channelofints):
                     i = np.mod(idx, len(
                         foilows))  # Adjust for the fact that channels are different amongst subjects, but fois are the same
-                    psds[idx] = psd(raw, psds[idx], chans, foilows[i], foihighs[i], fsample)
+                    psds[idx], this_psd_spec, this_freqs = psd(raw, psds[idx], chans, foilows[i], foihighs[i], fsample)
+
+                    if self.plotpref == 'both' or self.plotpref == 'experiment':
+                        band = idx + 1
+                        if band % 2 == 0:
+                            col = 2
+                        else:
+                            col = 0
+
+                        if idx < 2:
+                            row = 2
+                        elif 2 <= idx <= 3:
+                            row = 3
+                        else:
+                            print('too many PSD bands, band {} not plotted'.format(band))
+
+                        ax = psd_plot(ax, this_psd_spec, psds[idx], this_freqs, band, row, col, foilows[i], foihighs[i])
 
                 time2 = timer()
                 print("Time to compute 6 PSDs: {}".format(time2 - time1))
@@ -255,19 +277,18 @@ class TeamFlow:
                     pretrig = participant[2]
                     posttrig = participant[3]
 
-                    aeps[idx], exB_AEPlist[idx], exE_AEPlist[idx], aepxvallist[idx], segmentaepdata = \
+                    aeps[idx], aepxvallist[idx], exB_AEPlist[idx], exE_AEPlist[idx], segmentaepdata = \
                         aep(raw, aeps[idx], exB_AEPlist[idx], exE_AEPlist[idx], aepxvallist[idx], fsample,
                                          blocksize, channelofint, epoeventval, pretrig, posttrig, stimvals,
                                          self.segment)
 
-                    print(aepxvallist)
 
-                    if self.plotpref == 'both':
+                    if self.plotpref == 'both' or self.plotpref == 'experiment':
                         ax = aep_plot(ax=ax, data=segmentaepdata, participant=idx, fsample=fsample, aeplist=aeps,
                                       aepxvallist=aepxvallist, exB_AEPlist=exB_AEPlist, exE_AEPlist=exE_AEPlist,
                                       pretrig=pretrig, posttrig=posttrig, segment=self.segment)
 
-                    print(aeps[idx])
+
                 time2 = timer()
                 print("Time to compute 2 AEPs: {}".format(time2 - time1))
                 print("\n", "3-" * 60)
@@ -281,7 +302,7 @@ class TeamFlow:
                 plv_inter.append(inter)
                 plv_intra2.append(intra2)
 
-                if self.plotpref == 'both':
+                if self.plotpref == 'both' or self.plotpref == 'experiment':
                     ax = plv_plot(ax, con, plv_intra1, plv_inter, plv_intra2)
 
                 time2 = timer()
@@ -289,7 +310,6 @@ class TeamFlow:
                 print("\n", "4-" * 60)
 
                 ############################################################################
-
                 ###############Make Datastructure to make plotting easier###################
                 # AEPs
                 for idx, participant in enumerate(aeps):
@@ -306,7 +326,7 @@ class TeamFlow:
                 data_dict['PLV 2'] = plv_intra2
                 data_dict['PLV inter'] = plv_inter
 
-                intra1_tm, intra2_tm, inter_tm = self.calculate_tmflow(data_dict)
+                intra1_tm, intra2_tm, inter_tm = calculate_tmflow(data_dict)
 
                 data_dict['Intra 1'] = (intra1_tm)
                 data_dict['Intra 2'] = (intra2_tm)
@@ -323,35 +343,13 @@ class TeamFlow:
                             print(valuecopy)
                             data_dict[key] = valuecopy
                 print(data_dict.values())
+
                 ############################################################################
+                if self.plotpref == 'both' or self.plotpref == 'participant':
+                    ax2 = teamflow_plot(ax2, data_dict)
 
                 if self.plotpref != 'none':
-                    print("\nGenerating Plots...")
-                    time1 = timer()
-                    if self.plotpref == 'participant':  # or self.plotpref == 'both':
-                        ax[0, 0].cla()
-                        ax[0, 1].cla()
-                        ax[0, 2].cla()
-
-                        x = np.arange(1, len(data_dict['Intra 1']) + 1)
-
-                        ax[0, 0].bar(x, data_dict['Intra 1'], width=0.4, color='red')  # index for flow intra 1
-                        ax[0, 1].bar(x, data_dict['Inter'], width=0.4, color='blue')  # index for plv inter
-                        ax[0, 2].bar(x, data_dict['Intra 2'], width=0.4, color='green')  # index for plv intra 2
-
-                        # ax[0, 0].plot(x, data_dict['Intra 1'], color='red')  # index for flow intra 1
-                        # ax[0, 1].plot(x, data_dict['Inter'], color='blue')  # index for plv inter
-                        # ax[0, 2].plot(x, data_dict['Intra 2'], color='green')  # index for plv intra 2
-
-                        ax[0, 0].set_ylim(0, 10)
-                        ax[0, 1].set_ylim(0, 10)
-                        ax[0, 2].set_ylim(0, 10)
-
-                        ax[0, 0].set(title='Intra 1', xlabel='Segment #', ylabel='Score')
-                        ax[0, 1].set(title='Inter', xlabel='Segment #', ylabel='Score')
-                        ax[0, 2].set(title='Intra 2', xlabel='Segment #', ylabel='Score')
-                        # self.fig.suptitle('Data Segment {}'.format(self.segment), fontsize=16)
-                    plt.pause(0.05)
+                    plt.pause(0.005)
                     # plt.show()
 
                 # self.final()
@@ -400,7 +398,7 @@ class TeamFlow:
         fulldatanostim = np.delete(fulldata, int(trigchan), axis=0)
         blocksize = round(blocksize_sec * fsample)
         self.filepath = filepath
-        self.prevsamp = 0
+        prevsamp = 0
         print("OFFLINE ANALYSIS MODE")
         print("Total Samples Loaded = {}".format(fulldata.shape))
 
@@ -433,23 +431,23 @@ class TeamFlow:
             # time.sleep(self.delay)
             time1 = timer()
             time3 = timer()
-            currentsamp = self.prevsamp + blocksize
+            currentsamp = prevsamp + blocksize
             if currentsamp < fulldata.shape[1]:
                 print("\n", "-" * 60)
                 print('\nProcessing data from segment: ' + str(self.segment))
-                print("Trying to read from sample {0} to {1}. Samples per block: {2}".format(self.prevsamp, currentsamp,
+                print("Trying to read from sample {0} to {1}. Samples per block: {2}".format(prevsamp, currentsamp,
                                                                                              blocksize))
                 participant_data = []
                 idx = 0
                 while idx < fulldatanostim.shape[0]:
-                    participant_data.append(fulldatanostim[int(idx):idx + nchansparticipant, self.prevsamp:currentsamp])
+                    participant_data.append(fulldatanostim[int(idx):idx + nchansparticipant, prevsamp:currentsamp])
                     idx += nchansparticipant
 
-                # D1 = fulldata[0:128, self.prevsamp:currentsamp]
-                # D2 = fulldata[128:256, self.prevsamp:currentsamp]
-                stimvals = fulldata[int(trigchan), self.prevsamp:currentsamp] * 1000000
+                # D1 = fulldata[0:128, prevsamp:currentsamp]
+                # D2 = fulldata[128:256, prevsamp:currentsamp]
+                stimvals = fulldata[int(trigchan), prevsamp:currentsamp] * 1000000
 
-                self.prevsamp = currentsamp
+                prevsamp = currentsamp
                 # print(D)
                 print('Samples loaded for segment: ' + str(self.segment))
 
@@ -637,18 +635,23 @@ class TeamFlow:
         #         fig, ax = plt.subplots(1, 3, squeeze=False,
         #                                figsize=(self.windowsize * 3, self.windowsize))
         # creates subplots where all plots are added later
+        ax = None
+        ax2 = None
 
         if self.plotpref != 'none':
             if self.plotpref == 'participant':
                 # plt.close(self.fig)
-                fig, ax = plt.subplots(1, 3, squeeze=False,
+                fig2, ax2 = plt.subplots(1, 3, squeeze=False,
                                        figsize=(self.windowsize * 3, self.windowsize))
             elif self.plotpref == 'both':
-                fig, ax = plt.subplots(5, 4, figsize=(self.windowsize * 2, self.windowsize))
+                fig, ax = plt.subplots(4, 4, figsize=(self.windowsize * 2, self.windowsize))
                 fig.subplots_adjust(left=0.05, right=.975, top=.92, bottom=0.05, hspace=.4, wspace=.2)
+
+                fig2, ax2 = plt.subplots(1, 3, squeeze=False,
+                                        figsize=(self.windowsize * 3, self.windowsize))
         plt.ion()
 
-        return fig, ax
+        return fig, ax, fig2, ax2
 
     def save_csv(self, data, exp_name=None):
 
@@ -818,45 +821,45 @@ class TeamFlow:
             else:
                 return l
 
-    def calculate_tmflow(self, data_dict):
-
-        new_dict = data_dict.copy()
-
-        for key, value in new_dict.items():
-            new_dict[key] = self.moving_average(value, norm=True)
-
-        # for idx, aep in enumerate(aeps):
-        #     aeps_norm_plot[idx] = self.moving_average(aep, norm=True, initval=0.55997824)
-        #     aeps_raw_plot[idx] = self.moving_average(aep, norm=False)
-        #
-        # for idx, psd in enumerate(psds):
-        #     psds_raw_plot[idx] = self.moving_average(psd, norm=False)
-        #     psds_norm_plot[idx] = self.moving_average(psd, norm=True)
-        #
-        # PLV_inter_plot = self.moving_average(plv_inter, norm=True)
-        # PLV_intra1_plot = self.moving_average(plv_intra1, norm=True)
-        # PLV_intra2_plot = self.moving_average(plv_intra2, norm=True)
-
-        intra1 = data_dict['Intra 1']
-        intra2 = data_dict['Intra 2']
-        inter = data_dict['Inter']
-
-        if new_dict['AEP 1'][-1] != 0:
-            intra1.append((1 / new_dict['AEP 1'][-1]) + new_dict['Alpha1'][-1] + \
-                          (1 / new_dict['Beta1'][-1]))
-        else:
-            intra1.append((1 / 0.55997824) + new_dict['Alpha1'][-1] + \
-                          (1 / new_dict['Beta1'][-1]))
-
-        if new_dict['AEP 2'][-1] != 0:
-            intra2.append((1 / new_dict['AEP 2'][-1]) + new_dict['Alpha2'][-1] + (1 / new_dict['Beta2'][-1]))
-        else:
-            intra2.append((1 / 0.55997824) + new_dict['Alpha2'][-1] + (1 / new_dict['Beta2'][-1]))
-
-        inter.append(new_dict['PLV inter'][-1] + ((new_dict['PLV 1'][-1] + new_dict['PLV 2'][-1]) / 2) +
-                     ((new_dict['Gamma1'][-1] + new_dict['Gamma2'][-1]) / 2))
-
-        return intra1, intra2, inter
+    # def calculate_tmflow(self, data_dict):
+    #
+    #     new_dict = data_dict.copy()
+    #
+    #     for key, value in new_dict.items():
+    #         new_dict[key] = self.moving_average(value, norm=True)
+    #
+    #     # for idx, aep in enumerate(aeps):
+    #     #     aeps_norm_plot[idx] = self.moving_average(aep, norm=True, initval=0.55997824)
+    #     #     aeps_raw_plot[idx] = self.moving_average(aep, norm=False)
+    #     #
+    #     # for idx, psd in enumerate(psds):
+    #     #     psds_raw_plot[idx] = self.moving_average(psd, norm=False)
+    #     #     psds_norm_plot[idx] = self.moving_average(psd, norm=True)
+    #     #
+    #     # PLV_inter_plot = self.moving_average(plv_inter, norm=True)
+    #     # PLV_intra1_plot = self.moving_average(plv_intra1, norm=True)
+    #     # PLV_intra2_plot = self.moving_average(plv_intra2, norm=True)
+    #
+    #     intra1 = data_dict['Intra 1']
+    #     intra2 = data_dict['Intra 2']
+    #     inter = data_dict['Inter']
+    #
+    #     if new_dict['AEP 1'][-1] != 0:
+    #         intra1.append((1 / new_dict['AEP 1'][-1]) + new_dict['Alpha1'][-1] + \
+    #                       (1 / new_dict['Beta1'][-1]))
+    #     else:
+    #         intra1.append((1 / 0.55997824) + new_dict['Alpha1'][-1] + \
+    #                       (1 / new_dict['Beta1'][-1]))
+    #
+    #     if new_dict['AEP 2'][-1] != 0:
+    #         intra2.append((1 / new_dict['AEP 2'][-1]) + new_dict['Alpha2'][-1] + (1 / new_dict['Beta2'][-1]))
+    #     else:
+    #         intra2.append((1 / 0.55997824) + new_dict['Alpha2'][-1] + (1 / new_dict['Beta2'][-1]))
+    #
+    #     inter.append(new_dict['PLV inter'][-1] + ((new_dict['PLV 1'][-1] + new_dict['PLV 2'][-1]) / 2) +
+    #                  ((new_dict['Gamma1'][-1] + new_dict['Gamma2'][-1]) / 2))
+    #
+    #     return intra1, intra2, inter
 
         # interfinal = float(interfinal)
         # intra1_tm.append(intras_plot[0])

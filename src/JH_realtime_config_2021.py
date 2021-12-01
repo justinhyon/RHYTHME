@@ -36,13 +36,16 @@ numparticipants = 2
 # configurations for realtime mode (ignored in offline mode)
 exp_name = 'test_2'
 dataport = 1972
+n_skipped_segs = 1  # max number of segments to skip in between 2 processed segments due to runtime
+wait_segs = 2  # How many segments worth of time (blocksize_sec) to wait for new data before quitting the pipeline. does
+                # not apply to the initial wait for first segment to arrive
 delay = .01  # how long to wait before checking again for new samples in the buffer
 
 # configurations for offline mode (ignored in realtime mode)
 filepath = '/Users/jasonhyon/Desktop/JoinedData/170719_TRIAL2__EM_MD.set'  # path to the  bdf data file
 fsample = 256  # samples per second
 
-# ----------------aep configurations-----------------
+# ----------------aep configurations----------------- erp
 # subject 1
 channelofint_aep1 = [1, 2, 3, 33, 34, 52, 65, 66, 87, 97, 98, 110, 111, 112]
 epoeventval1 = 5  # stim channel event value desired
@@ -54,7 +57,7 @@ epoeventval2 = 5
 pretrig2 = .3
 posttrig2 = .5
 
-# -----------------plv configurations (unused since MNE does everything)-----------------
+# -----------------plv configurations (unused since MNE does everything)----------------- interbrain connectivity ibc
 num_plvsimevents = 5 # number of simulated events for each PLV segment
 channelofint_plv = 0
 frqofint = 0
@@ -96,7 +99,8 @@ if __name__ == '__main__':
                      channelofint_psdT2, channelofint_psdF2, channelofint_psdA2],
                     [foillowT1, foillowF1, foillowA1], [foihighT1, foihighF1, foihighA1],
                     blocksize_sec, num_plvsimevents, [[channelofint_aep1, epoeventval1, pretrig1, posttrig1],
-                    [channelofint_aep2, epoeventval2, pretrig2, posttrig2]], option, delay, units, removefirstsample, exp_name)
+                    [channelofint_aep2, epoeventval2, pretrig2, posttrig2]], option, delay, units, removefirstsample,
+                      exp_name, n_skipped_segs, wait_segs)
     # For PSD:
     # List of FOI low and high must be the same length
     # Length of channels list must be an integer multiple of FOI low/high list length
