@@ -2,11 +2,14 @@ def calculate_tmflow(data_dict):
     new_dict = data_dict.copy()
 
     for key, value in new_dict.items():
-        new_dict[key] = moving_average(value, norm=True)
+        print(key, ':', value)
+        for innerkey, innervalue in value.items():
+            if innerkey in ['aeplist', 'intra1', 'intra2', 'inter', 'psd_band1', 'psd_band2', 'psd_band3']:
+                new_dict[key][innerkey] = moving_average(innervalue, norm=True)
 
-    # for idx, aep in enumerate(aeps):
-    #     aeps_norm_plot[idx] = self.moving_average(aep, norm=True, initval=0.55997824)
-    #     aeps_raw_plot[idx] = self.moving_average(aep, norm=False)
+    # for idx, aep in enumerate(aeplist):
+    #     aeplist_norm_plot[idx] = self.moving_average(aep, norm=True, initval=0.55997824)
+    #     aeplist_raw_plot[idx] = self.moving_average(aep, norm=False)
     #
     # for idx, psd in enumerate(psds):
     #     psds_raw_plot[idx] = self.moving_average(psd, norm=False)
@@ -16,24 +19,47 @@ def calculate_tmflow(data_dict):
     # PLV_intra1_plot = self.moving_average(plv_intra1, norm=True)
     # PLV_intra2_plot = self.moving_average(plv_intra2, norm=True)
 
-    intra1 = data_dict['Intra 1']
-    intra2 = data_dict['Intra 2']
-    inter = data_dict['Inter']
 
-    if new_dict['AEP 1'][-1] != 0:
-        intra1.append((1 / new_dict['AEP 1'][-1]) + new_dict['Alpha1'][-1] + \
-                      (1 / new_dict['Beta1'][-1]))
+    print(data_dict.items())
+    intra1 = data_dict['flow']['Intra 1']
+    intra2 = data_dict['flow']['Intra 2']
+    inter = data_dict['flow']['Inter']
+
+    aeplist = []
+    for n, keyname in enumerate([i for i in list(new_dict.keys()) if 'aep' in i]):
+
+        aeplist.append(new_dict[keyname]['aeps'])
+
+    psd1 = {}
+    psd2 = {}
+    for keyname in [i for i in list(new_dict.keys()) if 'psd' in i]:
+        print(new_dict[keyname].items())
+        for n, psdkey in enumerate([j for j in list(new_dict[keyname].keys()) if 'psd' in j]):
+            if '1' in keyname:
+                psd1[psdkey] = new_dict[keyname][psdkey]
+            elif '2' in keyname:
+                psd2[psdkey] = new_dict[keyname][psdkey]
+
+    plv1 = new_dict['plv']['intra1']
+    plv2 = new_dict['plv']['intra2']
+    plvinter = new_dict['plv']['inter']
+
+    print(aeplist)
+    print(psd1)
+    if aeplist[0][-1] != 0:
+        intra1.append((1 / aeplist[0][-1]) + psd1['psd_band3'][-1] + \
+                      (1 / psd1['psd_band2'][-1]))
     else:
-        intra1.append((1 / 0.55997824) + new_dict['Alpha1'][-1] + \
-                      (1 / new_dict['Beta1'][-1]))
+        intra1.append((1 / 0.55997824) + psd1['psd_band3'][-1] + \
+                      (1 / psd1['psd_band2'][-1]))
 
-    if new_dict['AEP 2'][-1] != 0:
-        intra2.append((1 / new_dict['AEP 2'][-1]) + new_dict['Alpha2'][-1] + (1 / new_dict['Beta2'][-1]))
+    if aeplist[1][-1] != 0:
+        intra2.append((1 / aeplist[1][-1]) + psd2['psd_band3'][-1] + (1 / psd2['psd_band2'][-1]))
     else:
-        intra2.append((1 / 0.55997824) + new_dict['Alpha2'][-1] + (1 / new_dict['Beta2'][-1]))
+        intra2.append((1 / 0.55997824) + psd2['psd_band3'][-1] + (1 / psd2['psd_band2'][-1]))
 
-    inter.append(new_dict['PLV inter'][-1] + ((new_dict['PLV 1'][-1] + new_dict['PLV 2'][-1]) / 2) +
-                 ((new_dict['Gamma1'][-1] + new_dict['Gamma2'][-1]) / 2))
+    inter.append(plvinter[-1] + ((plv1[-1] + plv2[-1]) / 2) +
+                 ((psd1['psd_band1'][-1] + psd2['psd_band1'][-1]) / 2))
 
     return intra1, intra2, inter
 
@@ -47,11 +73,11 @@ def teamflow_plot(ax, data_dict):
     ax[0, 1].cla()
     ax[0, 2].cla()
 
-    x = np.arange(1, len(data_dict['Intra 1']) + 1)
+    x = np.arange(1, len(data_dict['flow']['Intra 1']) + 1)
 
-    ax[0, 0].bar(x, data_dict['Intra 1'], width=0.4, color='red')  # index for flow intra 1
-    ax[0, 1].bar(x, data_dict['Inter'], width=0.4, color='blue')  # index for plv inter
-    ax[0, 2].bar(x, data_dict['Intra 2'], width=0.4, color='green')  # index for plv intra 2
+    ax[0, 0].bar(x, data_dict['flow']['Intra 1'], width=0.4, color='red')  # index for flow intra 1
+    ax[0, 1].bar(x, data_dict['flow']['Inter'], width=0.4, color='blue')  # index for plv inter
+    ax[0, 2].bar(x, data_dict['flow']['Intra 2'], width=0.4, color='green')  # index for plv intra 2
 
     # ax[0, 0].plot(x, data_dict['Intra 1'], color='red')  # index for flow intra 1
     # ax[0, 1].plot(x, data_dict['Inter'], color='blue')  # index for plv inter

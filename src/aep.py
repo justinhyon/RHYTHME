@@ -122,16 +122,14 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
 def aep_plot(ax, data, participant, fsample, aeplist, aepxvallist, exB_AEPlist, exE_AEPlist, pretrig, posttrig, segment):
     import numpy as np
 
-    if participant == 0:
+    print(participant)
+    if participant == 1:
         y = 0
-    elif participant == 1:
+    elif participant == 2:
         y = 2
 
-    AEPs = aeplist[participant]
+    AEPs = aeplist
 
-    exB_AEPs = exB_AEPlist[participant]
-    exE_AEPs = exE_AEPlist[participant]
-    AEPxval = aepxvallist[participant]
 
     pretrig = pretrig
     posttrig = posttrig
@@ -184,13 +182,13 @@ def aep_plot(ax, data, participant, fsample, aeplist, aepxvallist, exB_AEPlist, 
     ax[0, y].set_ylabel('Volts')
 
     # generate plot of all AEP peak indexes
-    x = AEPxval
+    x = aepxvallist
 
     ax[0, y + 1].bar(x, AEPs, width=0.4)
-    ax[0, y + 1].bar(exB_AEPs, .000001, width=0.2, alpha=.5)
-    ax[0, y + 1].bar(exE_AEPs, -.000001, width=0.2, alpha=.5)
+    ax[0, y + 1].bar(exB_AEPlist, .000001, width=0.2, alpha=.5)
+    ax[0, y + 1].bar(exE_AEPlist, -.000001, width=0.2, alpha=.5)
     # ax[0, y + 1].axis(xmin=-3)
-    for i, v in zip(AEPxval, AEPs):
+    for i, v in zip(aepxvallist, AEPs):
         if v != 0.:
             ax[0, y + 1].text(i - .5, v, str(round(v, 10)))
     ax[0, y + 1].hlines(0, 0, segment)
