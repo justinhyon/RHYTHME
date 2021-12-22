@@ -76,38 +76,53 @@ def generate_sim_events(raw, segment, blocksize, fsample, numblocks):
     return E, sim_len
 
 
-def plv_plot(ax, con, PLV_intra1, PLV_inter, PLV_intra2):
+def plv_plot(ax, con, PLV_intra1, PLV_inter, PLV_intra2, location):
+    x, y = location
     data = con
 
-    ax[1, 0].cla()  # clears the axes to prepare for new data
-    ax[1, 1].cla()
-    ax[1, 2].cla()
-    ax[1, 3].cla()
+    ax[x, y].cla()  # clears the axes to prepare for new data
 
     # connectivity matrix
-    ax[1, 0].axvline(x=data.shape[0] / 2, color='red')  # horizontal and vertical lines for quadrants
-    ax[1, 0].hlines(int(data.shape[0] / 2), 0, data.shape[0], color='red')
-    ax[1, 0].imshow(data)  # plots the data
+    ax[x, y].axvline(x=data.shape[0] / 2, color='red')  # horizontal and vertical lines for quadrants
+    ax[x, y].hlines(int(data.shape[0] / 2), 0, data.shape[0], color='red')
+    ax[x, y].imshow(data)  # plots the data
+    ax[x, y].set(title='Connectivity Matrix', xlabel='Channel #', ylabel='Channel #')
+    return ax
 
-    # average PLV indexes
-    x = np.arange(1, len(PLV_intra1) + 1)
-    ax[1, 1].bar(x, PLV_intra1, width=0.4, color='red')  # index for plv intra 1
-    ax[1, 2].bar(x, PLV_inter, width=0.4, color='blue')  # index for plv inter
-    ax[1, 3].bar(x, PLV_intra2, width=0.4, color='green')  # index for plv intra 2
+def plv_idx_plot(ax, PLV_list, location, name):
+    x, y = location
+    ax[x, y].cla()
 
-    for i, v in enumerate(PLV_intra1):  # adds labels to bars
-        if v != 0.:
-            ax[1, 1].text(i + 1 - .2, v, str(round(v, 2)))
-    for i, v in enumerate(PLV_inter):
-        if v != 0.:
-            ax[1, 2].text(i + 1 - .2, v, str(round(v, 2)))
-    for i, v in enumerate(PLV_intra2):
-        if v != 0.:
-            ax[1, 3].text(i + 1 - .2, v, str(round(v, 2)))
+    xval = np.arange(1, len(PLV_list) + 1)
+    ax[x, y].bar(xval, PLV_list, width=0.4, color='blue')  # index for plv intra 1
 
-    ax[1, 0].set(title='Connectivity Matrix', xlabel='Channel #', ylabel='Channel #')
-    ax[1, 1].set(title='PLV values for Subject 1', xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
-    ax[1, 2].set(title='PLV Values for Inter-Brain', xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
-    ax[1, 3].set(title='PLV Values for subject 2', xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
+    for i, v in enumerate(PLV_list):  # adds labels to bars
+        if v != 0.:
+            ax[x, y].text(i + 1 - .2, v, str(round(v, 2)))
+    ax[x, y].set(title='{} Values'.format(name), xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
+
+    # ax[1, 1].cla()
+    # ax[1, 2].cla()
+    # ax[1, 3].cla()
+    # # average PLV indexes
+    # xval = np.arange(1, len(PLV_intra1) + 1)
+    # ax[1, 1].bar(xval, PLV_intra1, width=0.4, color='red')  # index for plv intra 1
+    # ax[1, 2].bar(xval, PLV_inter, width=0.4, color='blue')  # index for plv inter
+    # ax[1, 3].bar(xval, PLV_intra2, width=0.4, color='green')  # index for plv intra 2
+    #
+    # for i, v in enumerate(PLV_intra1):  # adds labels to bars
+    #     if v != 0.:
+    #         ax[1, 1].text(i + 1 - .2, v, str(round(v, 2)))
+    # for i, v in enumerate(PLV_inter):
+    #     if v != 0.:
+    #         ax[1, 2].text(i + 1 - .2, v, str(round(v, 2)))
+    # for i, v in enumerate(PLV_intra2):
+    #     if v != 0.:
+    #         ax[1, 3].text(i + 1 - .2, v, str(round(v, 2)))
+    #
+    #
+    # ax[1, 1].set(title='PLV values for Subject 1', xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
+    # ax[1, 2].set(title='PLV Values for Inter-Brain', xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
+    # ax[1, 3].set(title='PLV Values for subject 2', xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
 
     return ax

@@ -1,5 +1,6 @@
+from copy import deepcopy
 def calculate_tmflow(data_dict):
-    new_dict = data_dict.copy()
+    new_dict = deepcopy(data_dict)
 
     for key, value in new_dict.items():
         print(key, ':', value)

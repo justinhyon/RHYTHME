@@ -1,6 +1,5 @@
 def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize, channelofint, epoeventval,
         pretrig, posttrig, stim_values, segment):
-
     import numpy as np
 
     if epoeventval in stim_values:
@@ -36,7 +35,6 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
         firstloop = True
         append_aep = False
         mAEP1amp = []
-
 
         for event in indexes:
             terminate = False
@@ -115,21 +113,23 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
         print("\nno events with value", epoeventval, "found in this segment, AEP calculation not performed")
         aeplist.append(0.)
         aepxvallist.append(segment)
-        return aeplist, aepxvallist, exB_AEPlist, exE_AEPlist, np.zeros((len(channelofint), int(np.round((pretrig * fsample) + (posttrig * fsample)))))
+        return aeplist, aepxvallist, exB_AEPlist, exE_AEPlist, np.zeros(
+            (len(channelofint), int(np.round((pretrig * fsample) + (posttrig * fsample)))))
 
 
-
-def aep_plot(ax, data, participant, fsample, aeplist, aepxvallist, exB_AEPlist, exE_AEPlist, pretrig, posttrig, segment):
+def aep_plot(ax, data, participant, fsample, aeplist, aepxvallist, exB_AEPlist, exE_AEPlist, pretrig, posttrig, segment,
+             location):
     import numpy as np
 
+    x = location[0]
+    y = location[1]
     print(participant)
-    if participant == 1:
-        y = 0
-    elif participant == 2:
-        y = 2
+    # if participant == 1:
+    #     y = 0
+    # elif participant == 2:
+    #     y = 2
 
     AEPs = aeplist
-
 
     pretrig = pretrig
     posttrig = posttrig
@@ -153,47 +153,74 @@ def aep_plot(ax, data, participant, fsample, aeplist, aepxvallist, exB_AEPlist, 
     # data = raw.get_data()
     dat = data.transpose()
 
-
-    ax[0, y].cla()  # clears the axes to prepare for new data
-    ax[0, y + 1].cla()
-    x = np.arange((-1 * pretrig), posttrig, (posttrig + pretrig) / int(
+    ax[x, y].cla()  # clears the axes to prepare for new data
+    # ax[x, y + 1].cla()
+    xval = np.arange((-1 * pretrig), posttrig, (posttrig + pretrig) / int(
         (posttrig + pretrig) * fsample))  # generate x axis values (time)
 
     # plots standard deviation if data is not 0
     if data.ndim > 1:
-
         sdAEPamp = data.std(axis=0)[:-1]
 
         dat = data.mean(axis=0)[:-1]
 
-        ax[0, y].fill_between(x, dat + sdAEPamp, dat - sdAEPamp, facecolor='red', alpha=0.3)
+        ax[x, y].fill_between(xval, dat + sdAEPamp, dat - sdAEPamp, facecolor='red', alpha=0.3)
 
     # plots the data against time
-    ax[0, y].plot(x, dat, color='black')
+    ax[x, y].plot(xval, dat, color='black')
 
     # format AEP vs time plot
-    ax[0, y].axvline(x=0, color='red')
-    ax[0, y].axvspan(.110, .150, alpha=0.3, color='green')
-    ax[0, y].axvspan(.210, .250, alpha=0.3, color='green')
-    ax[0, y].axvspan(.310, .350, alpha=0.3, color='green')
-    ax[0, y].hlines(0, -1 * pretrig, posttrig)
-    ax[0, y].set_title('Subject {0} AEP'.format(participant + 1))
-    ax[0, y].set_xlabel('Time (s)')
-    ax[0, y].set_ylabel('Volts')
+    ax[x, y].axvline(x=0, color='red')
+    ax[x, y].axvspan(.110, .150, alpha=0.3, color='green')
+    ax[x, y].axvspan(.210, .250, alpha=0.3, color='green')
+    ax[x, y].axvspan(.310, .350, alpha=0.3, color='green')
+    ax[x, y].hlines(0, -1 * pretrig, posttrig)
+    ax[x, y].set_title('Subject {0} AEP'.format(participant + 1))
+    ax[x, y].set_xlabel('Time (s)')
+    ax[x, y].set_ylabel('Volts')
 
+    # # generate plot of all AEP peak indexes
+    # x = aepxvallist
+    #
+    # ax[0, y + 1].bar(x, AEPs, width=0.4)
+    # ax[0, y + 1].bar(exB_AEPlist, .000001, width=0.2, alpha=.5)
+    # ax[0, y + 1].bar(exE_AEPlist, -.000001, width=0.2, alpha=.5)
+    # # ax[0, y + 1].axis(xmin=-3)
+    # for i, v in zip(aepxvallist, AEPs):
+    #     if v != 0.:
+    #         ax[0, y + 1].text(i - .5, v, str(round(v, 10)))
+    # ax[0, y + 1].hlines(0, 0, segment)
+    # ax[0, y + 1].set_title('Subject {} AEP Peak Amplitude Index'.format(participant + 1))
+    # ax[0, y + 1].set_xlabel('Segment #')
+    # ax[0, y + 1].set_ylabel('AEP Peak Index (V)')
+
+    return ax
+
+
+def aep_idx_plot(ax, participant, aeplist, aepxvallist, exB_AEPlist, exE_AEPlist, segment, location):
+    # if participant == 1:
+    #     y = 0
+    # elif participant == 2:
+    #     y = 2
+
+    x = location[0]
+    y = location[1]
+
+    ax[x,y].cla()
+    AEPs = aeplist
     # generate plot of all AEP peak indexes
-    x = aepxvallist
+    # xval = aepxvallist
 
-    ax[0, y + 1].bar(x, AEPs, width=0.4)
-    ax[0, y + 1].bar(exB_AEPlist, .000001, width=0.2, alpha=.5)
-    ax[0, y + 1].bar(exE_AEPlist, -.000001, width=0.2, alpha=.5)
+    ax[x, y ].bar(aepxvallist, AEPs, width=0.4)
+    ax[x, y ].bar(exB_AEPlist, .000001, width=0.2, alpha=.5)
+    ax[x, y ].bar(exE_AEPlist, -.000001, width=0.2, alpha=.5)
     # ax[0, y + 1].axis(xmin=-3)
     for i, v in zip(aepxvallist, AEPs):
         if v != 0.:
-            ax[0, y + 1].text(i - .5, v, str(round(v, 10)))
-    ax[0, y + 1].hlines(0, 0, segment)
-    ax[0, y + 1].set_title('Subject {} AEP Peak Amplitude Index'.format(participant + 1))
-    ax[0, y + 1].set_xlabel('Segment #')
-    ax[0, y + 1].set_ylabel('AEP Peak Index (V)')
+            ax[x, y ].text(i - .5, v, str(round(v, 10)))
+    ax[x, y ].hlines(0, 0, segment)
+    ax[x, y ].set_title('Subject {} AEP Peak Amplitude Index'.format(participant + 1))
+    ax[x, y ].set_xlabel('Segment #')
+    ax[x, y ].set_ylabel('AEP Peak Index (V)')
 
     return ax
