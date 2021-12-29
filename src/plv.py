@@ -1,7 +1,7 @@
 import numpy as np
 import mne
 
-def plv(raw, segment, blocksize, fsample, numblocks):
+def plv(raw, segment, blocksize, fsample, numblocks, nparticipants, nchansparticipant):
     # import numpy as np
     # import mne
     from mne.connectivity import spectral_connectivity
@@ -22,28 +22,60 @@ def plv(raw, segment, blocksize, fsample, numblocks):
     # np.delete(con, 257, axis=1)
     # np.delete(con, 257, axis=0)
     # print('Connectivity Matrix dimensions: {}'.format(con.shape))
+    # if nparticipants == 2:
+    #     intra1 = con[0:int(con.shape[0] / 2), 0:int(con.shape[1] / 2)]
+    #     inter = con[int(con.shape[0] / 2):int(con.shape[0] / 2) * 2, 0:int(con.shape[1] / 2)]
+    #     intra2 = con[int(con.shape[0] / 2):int(con.shape[0] / 2) * 2, int(con.shape[1] / 2):int(con.shape[1] / 2) * 2]
+    #     plv1, plv2, plv3 = [], [], []
+    #
+    #     plv2.append(np.mean(inter[0, :-1]))  # 2 triangular sections have no first row, while rectangular section does
+    #     idx = 1
+    #     while idx < int(con.shape[0] / 2):
+    #         plv1.append(np.mean(intra1[idx, 0:idx]))
+    #         plv2.append(np.mean(inter[idx, :]))
+    #         plv3.append(np.mean(intra2[idx, 0:idx]))
+    #         idx += 1
+    #     plv1_mean = np.nanmean(plv1)
+    #     plv2_mean = np.nanmean(plv2)
+    #     plv3_mean = np.nanmean(plv3)
+    #
+    #     print("PLV value for intra-brain subject 1: ", plv1_mean)
+    #     print("PLV value for inter-brain: ", plv2_mean)
+    #     print("PLV value for intra-brain subject 2: ", plv3_mean)
+    # else:
+    intras = []
+    inters = []
+    for i in range(nparticipants+1):
+        for j in range(i):
+            if j==i-1:
+                this_intra = []
+                square = con[int((i-1) * nchansparticipant) : int(i * nchansparticipant),
+                              int(j * nchansparticipant) : int((j+1) * nchansparticipant)]
+                # print(int((i-1) * nchansparticipant), int(i * nchansparticipant) ,con,square)
+                idx = 1
+                while idx < int(nchansparticipant):
+                    this_intra.append(np.mean(square[idx, 0:idx]))
+                    idx += 1
+                intras.append(np.mean(this_intra))
+            else:
+                inters.append(con[int((i-1) * nchansparticipant) : int(i * nchansparticipant),
+                              int(j * nchansparticipant) : int((j+1) * nchansparticipant)])
+    # intrameans = []
+    intermean = np.nanmean(np.nanmean(inters))
 
-    intra1 = con[0:int(con.shape[0] / 2), 0:int(con.shape[1] / 2)]
-    inter = con[int(con.shape[0] / 2):int(con.shape[0] / 2) * 2, 0:int(con.shape[1] / 2)]
-    intra2 = con[int(con.shape[0] / 2):int(con.shape[0] / 2) * 2, int(con.shape[1] / 2):int(con.shape[1] / 2) * 2]
-    plv1, plv2, plv3 = [], [], []
+    # for intra in intras:
+    #     print(intra)
+    #     intrameans.append(np.nanmean(intra))
 
-    plv2.append(np.mean(inter[0, :-1]))  # 2 triangular sections have no first row, while rectangular section does
-    idx = 1
-    while idx < int(con.shape[0] / 2):
-        plv1.append(np.mean(intra1[idx, 0:idx]))
-        plv2.append(np.mean(inter[idx, :]))
-        plv3.append(np.mean(intra2[idx, 0:idx]))
-        idx += 1
-    plv1_mean = np.nanmean(plv1)
-    plv2_mean = np.nanmean(plv2)
-    plv3_mean = np.nanmean(plv3)
+    # if nparticipants == 2:
+    #
+    # else:
+    #     intrameans.append(np.nanmean(np.nanmean(intras)))
+    # plv1_mean = np.nanmean(np.nanmean(intras))
+    # plv2_mean = np.nanmean(np.nanmean(inters))
+    # plv3_mean = 0
 
-    print("PLV value for intra-brain subject 1: ", plv1_mean)
-    print("PLV value for inter-brain: ", plv2_mean)
-    print("PLV value for intra-brain subject 2: ", plv3_mean)
-
-    return plv1_mean, plv2_mean, plv3_mean, con
+    return intras, intermean, con
 
 
 def generate_sim_events(raw, segment, blocksize, fsample, numblocks):
@@ -76,7 +108,7 @@ def generate_sim_events(raw, segment, blocksize, fsample, numblocks):
     return E, sim_len
 
 
-def plv_plot(ax, con, PLV_intra1, PLV_inter, PLV_intra2, location):
+def plv_plot(ax, con, location):
     x, y = location
     data = con
 

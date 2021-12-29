@@ -5,7 +5,7 @@ def calculate_tmflow(data_dict):
     for key, value in new_dict.items():
         print(key, ':', value)
         for innerkey, innervalue in value.items():
-            if innerkey in ['aeplist', 'intra1', 'intra2', 'inter', 'psd_band1', 'psd_band2', 'psd_band3']:
+            if 'values' in innerkey:
                 new_dict[key][innerkey] = moving_average(innervalue, norm=True)
 
     # for idx, aep in enumerate(aeplist):
@@ -22,45 +22,45 @@ def calculate_tmflow(data_dict):
 
 
     print(data_dict.items())
-    intra1 = data_dict['flow']['Intra 1']
-    intra2 = data_dict['flow']['Intra 2']
-    inter = data_dict['flow']['Inter']
+    intra1 = data_dict['flow']['values_Intra 1']
+    intra2 = data_dict['flow']['values_Intra 2']
+    inter = data_dict['flow']['values_Inter']
 
     aeplist = []
     for n, keyname in enumerate([i for i in list(new_dict.keys()) if 'aep' in i]):
 
-        aeplist.append(new_dict[keyname]['aeps'])
+        aeplist.append(new_dict[keyname]['values_aep'])
 
     psd1 = {}
     psd2 = {}
     for keyname in [i for i in list(new_dict.keys()) if 'psd' in i]:
         print(new_dict[keyname].items())
-        for n, psdkey in enumerate([j for j in list(new_dict[keyname].keys()) if 'psd' in j]):
+        for n, psdkey in enumerate([j for j in list(new_dict[keyname].keys()) if 'values' in j]):
             if '1' in keyname:
                 psd1[psdkey] = new_dict[keyname][psdkey]
             elif '2' in keyname:
                 psd2[psdkey] = new_dict[keyname][psdkey]
 
-    plv1 = new_dict['plv']['intra1']
-    plv2 = new_dict['plv']['intra2']
-    plvinter = new_dict['plv']['inter']
+    plv1 = new_dict['plv']['values_intra1']
+    plv2 = new_dict['plv']['values_intra2']
+    plvinter = new_dict['plv']['values_inter']
 
     print(aeplist)
     print(psd1)
     if aeplist[0][-1] != 0:
-        intra1.append((1 / aeplist[0][-1]) + psd1['psd_band3'][-1] + \
-                      (1 / psd1['psd_band2'][-1]))
+        intra1.append((1 / aeplist[0][-1]) + psd1['values_band3'][-1] + \
+                      (1 / psd1['values_band2'][-1]))
     else:
-        intra1.append((1 / 0.55997824) + psd1['psd_band3'][-1] + \
-                      (1 / psd1['psd_band2'][-1]))
+        intra1.append((1 / 0.55997824) + psd1['values_band3'][-1] + \
+                      (1 / psd1['values_band2'][-1]))
 
     if aeplist[1][-1] != 0:
-        intra2.append((1 / aeplist[1][-1]) + psd2['psd_band3'][-1] + (1 / psd2['psd_band2'][-1]))
+        intra2.append((1 / aeplist[1][-1]) + psd2['values_band3'][-1] + (1 / psd2['values_band2'][-1]))
     else:
-        intra2.append((1 / 0.55997824) + psd2['psd_band3'][-1] + (1 / psd2['psd_band2'][-1]))
+        intra2.append((1 / 0.55997824) + psd2['values_band3'][-1] + (1 / psd2['values_band2'][-1]))
 
     inter.append(plvinter[-1] + ((plv1[-1] + plv2[-1]) / 2) +
-                 ((psd1['psd_band1'][-1] + psd2['psd_band1'][-1]) / 2))
+                 ((psd1['values_band1'][-1] + psd2['values_band1'][-1]) / 2))
 
     return intra1, intra2, inter
 
@@ -74,11 +74,11 @@ def teamflow_plot(ax, data_dict):
     ax[0, 1].cla()
     ax[0, 2].cla()
 
-    x = np.arange(1, len(data_dict['flow']['Intra 1']) + 1)
+    x = np.arange(1, len(data_dict['flow']['values_Intra 1']) + 1)
 
-    ax[0, 0].bar(x, data_dict['flow']['Intra 1'], width=0.4, color='red')  # index for flow intra 1
-    ax[0, 1].bar(x, data_dict['flow']['Inter'], width=0.4, color='blue')  # index for plv inter
-    ax[0, 2].bar(x, data_dict['flow']['Intra 2'], width=0.4, color='green')  # index for plv intra 2
+    ax[0, 0].bar(x, data_dict['flow']['values_Intra 1'], width=0.4, color='red')  # index for flow intra 1
+    ax[0, 1].bar(x, data_dict['flow']['values_Inter'], width=0.4, color='blue')  # index for plv inter
+    ax[0, 2].bar(x, data_dict['flow']['values_Intra 2'], width=0.4, color='green')  # index for plv intra 2
 
     # ax[0, 0].plot(x, data_dict['Intra 1'], color='red')  # index for flow intra 1
     # ax[0, 1].plot(x, data_dict['Inter'], color='blue')  # index for plv inter

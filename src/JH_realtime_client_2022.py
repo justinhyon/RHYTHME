@@ -60,7 +60,7 @@ class TeamFlow:
                        foilows, foihighs, blocksize_sec, num_plvsimevents, option, delay, units,
                        remfirstsample, exp_name, n_skipped_segs, wait_segs, function_dict, numparticipants,
                        ex_plot_matrix,
-                       sub_plot_matrix):
+                       sub_plot_matrix, channelnames):
         self.option = option
 
         if self.option == 'offline':
@@ -72,7 +72,7 @@ class TeamFlow:
             self.realtime_process(delay, badchans, nchansparticipant, trigchan, featurenames, channelofints,
                                   foilows, foihighs, blocksize_sec, num_plvsimevents, units, remfirstsample,
                                   exp_name, n_skipped_segs, wait_segs, function_dict, ex_plot_matrix,
-                                  sub_plot_matrix)
+                                  sub_plot_matrix, numparticipants, channelnames)
         else:
             print('invalid setting option selected')
             sys.exit(1)
@@ -80,7 +80,7 @@ class TeamFlow:
     def realtime_process(self, delay, badchans, nchansparticipant, trigchan, featurenames, channelofints,
                          foilows, foihighs, blocksize_sec, num_plvsimevents, units, remfirstsample, exp_name,
                          n_skipped_segs, wait_segs, function_dict, ex_plot_matrix,
-                         sub_plot_matrix):
+                         sub_plot_matrix, numparticipants, channelnames):
 
         '''
         numparticipants         number of participants
@@ -110,27 +110,23 @@ class TeamFlow:
         #     for n, psdname in enumerate([i for i in list(function_dict[keyname].keys()) if 'channelofint_psd' in i]):
         #         function_dict[keyname]['psd'+str(n)] = []
         # psds = [[] for i in range(len(channelofints))]
-        plv_intra1 = []
-        plv_inter = []
-        plv_intra2 = []
+        # plv_intra1 = []
+        # plv_inter = []
+        # plv_intra2 = []
         # function_dict['plv'] = {
         #     'plv_intra1': [],
         #     'inter': [],
         #     'plv_intra2': []
         # }
 
-        function_dict['flow'] = {
-            'Intra 1': [],
-            'Intra 2': [],
-            'Inter': []
-        }
+
 
         for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'aep' in i]):
-            function_dict[keyname]['aeps'] = []
+            # function_dict[keyname]['values_aep'] = []
             function_dict[keyname]['exB_AEPlist'] = []
             function_dict[keyname]['exE_AEPlist'] = []
             function_dict[keyname]['aepxvallist'] = []
-            # aeps = [[] for i in range(len(aep_data))]
+            # values_aep = [[] for i in range(len(aep_data))]
             # exB_AEPlist = [[] for i in range(len(aep_data))]
             # exE_AEPlist = [[] for i in range(len(aep_data))]
             # aepxvallist = [[] for i in range(len(aep_data))]
@@ -214,9 +210,13 @@ class TeamFlow:
                 print('Data shape (nChannels, nSamples): {}'.format(segmentdata.shape))
                 print(segmentdata)
 
-                stimvals = segmentdata[int(trigchan), :]
-                if 5 in stimvals:
-                    print("YEET")
+                stim = segmentdata[int(trigchan), :]
+                minval = np.amin(stim)
+                if minval != 0:
+                    stimvals = stim - minval  # correct values of the stim channel (stim is always last channel)
+                else:
+                    stimvals = stim
+
                 segmentdata = np.delete(segmentdata, int(trigchan), axis=0)
 
                 participant_data = []
@@ -230,7 +230,7 @@ class TeamFlow:
 
                 participant_raws = []
                 for i, participant in enumerate(participant_data):
-                    raw = self.make_raw(participant, stimvals, fsample, units)
+                    raw = self.make_raw(participant, stimvals, fsample, units, channelnames)
                     raw = self.preprocess_raw(raw, badchans[i])
                     participant_raws.append(raw)
                     print('Sub Data shape (nChannels, nSamples): {0} for participant {1}'.format(participant.shape,
@@ -259,7 +259,7 @@ class TeamFlow:
                 time2 = timer()
                 print("Time to recieve data and create MNE raw: {}".format(time2 - time1))
                 # print("\n", "1-" * 60)
-                self.stim_idx = self.TrigChan
+                self.stim_idx = str(self.TrigChan)
                 self.stim_values = stimvals
                 print('STIM CHANNEL: ', self.stim_idx, self.stim_values)
 
@@ -269,7 +269,7 @@ class TeamFlow:
                 ################## PSDs #################################################
                 time1 = timer()
                 for subject, keyname in enumerate([i for i in list(function_dict.keys()) if 'psd' in i]):
-                    for n, psdkey in enumerate([j for j in list(function_dict[keyname].keys()) if 'psd' in j]):
+                    for n, psdkey in enumerate([j for j in list(function_dict[keyname].keys()) if 'values' in j]):
                         print(psdkey)
 
                         # psdnames=['band1', 'band2']  #placeholder, remove
@@ -277,7 +277,7 @@ class TeamFlow:
                         # i = np.mod(idx, len(
                         #     foilows))  # Adjust for the fact that channels are different amongst subjects, but fois are the same
                         psds, this_psd_spec, this_freqs = psd(raw,
-                                                              function_dict[keyname]['psd_band' + r],
+                                                              function_dict[keyname]['values_band' + r],
                                                               function_dict[keyname]['channelofint_band' + r],
                                                               function_dict[keyname]['foilow_band' + r],
                                                               function_dict[keyname]['foihigh_band' + r],
@@ -318,7 +318,7 @@ class TeamFlow:
                         #                   function_dict[keyname]['foilow_band' + r],
                         #                   function_dict[keyname]['foihigh_band' + r])
 
-                        function_dict[keyname]['psd_band' + r] = psds
+                        function_dict[keyname]['values_band' + r] = psds
 
                 time2 = timer()
                 print("Time to compute 6 PSDs: {}".format(time2 - time1))
@@ -326,13 +326,13 @@ class TeamFlow:
 
                 ############################################################################
 
-                ########################### AEPs ##########################################
+                ########################### values_aep ##########################################
                 time1 = timer()
                 for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'aep' in i]):
 
-                    aeps, aepxvallist, exB_AEPlist, exE_AEPlist, segmentaepdata = \
+                    values_aep, aepxvallist, exB_AEPlist, exE_AEPlist, segmentaepdata = \
                         aep(raw=raw,
-                            aeplist=function_dict[keyname]['aeps'],
+                            aeplist=function_dict[keyname]['values_aep'],
                             exB_AEPlist=function_dict[keyname]['exB_AEPlist'],
                             exE_AEPlist=function_dict[keyname]['exE_AEPlist'],
                             aepxvallist=function_dict[keyname]['aepxvallist'],
@@ -353,7 +353,7 @@ class TeamFlow:
                             whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
                             ax[whichax] = aep_plot(ax=ax[whichax], data=segmentaepdata, participant=int(keyname[-1]),
                                                    fsample=fsample,
-                                                   aeplist=aeps,
+                                                   aeplist=values_aep,
                                                    aepxvallist=aepxvallist, exB_AEPlist=exB_AEPlist,
                                                    exE_AEPlist=exE_AEPlist,
                                                    segment=self.segment,
@@ -367,13 +367,13 @@ class TeamFlow:
                             whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
                             ax[whichax] = aep_idx_plot(ax=ax[whichax],
                                                        participant=int(keyname[-1]),
-                                                       aeplist=aeps,
+                                                       aeplist=values_aep,
                                                        aepxvallist=aepxvallist, exB_AEPlist=exB_AEPlist,
                                                        exE_AEPlist=exE_AEPlist,
                                                        segment=self.segment, location=loc
                                                        )
 
-                    function_dict[keyname]['aeps'] = aeps
+                    function_dict[keyname]['values_aep'] = values_aep
                     function_dict[keyname]['aepxvallist'] = aepxvallist
                     function_dict[keyname]['exB_AEPlist'] = exB_AEPlist
                     function_dict[keyname]['exE_AEPlist'] = exE_AEPlist
@@ -387,54 +387,99 @@ class TeamFlow:
                 #     pretrig = participant[2]
                 #     posttrig = participant[3]
                 #
-                #     aeps[idx], aepxvallist[idx], exB_AEPlist[idx], exE_AEPlist[idx], segmentaepdata = \
-                #         aep(raw, aeps[idx], exB_AEPlist[idx], exE_AEPlist[idx], aepxvallist[idx], fsample,
+                #     values_aep[idx], aepxvallist[idx], exB_AEPlist[idx], exE_AEPlist[idx], segmentaepdata = \
+                #         aep(raw, values_aep[idx], exB_AEPlist[idx], exE_AEPlist[idx], aepxvallist[idx], fsample,
                 #                          blocksize, channelofint, epoeventval, pretrig, posttrig, stimvals,
                 #                          self.segment)
                 #
                 #
                 #     if self.plotpref == 'both' or self.plotpref == 'experiment':
-                #         ax[0] = aep_plot(ax[0]=ax[0], data=segmentaepdata, participant=idx, fsample=fsample, aeplist=aeps,
+                #         ax[0] = aep_plot(ax[0]=ax[0], data=segmentaepdata, participant=idx, fsample=fsample, aeplist=values_aep,
                 #                       aepxvallist=aepxvallist, exB_AEPlist=exB_AEPlist, exE_AEPlist=exE_AEPlist,
                 #                       pretrig=pretrig, posttrig=posttrig, segment=self.segment)
 
                 time2 = timer()
-                print("Time to compute 2 AEPs: {}".format(time2 - time1))
+                print("Time to compute 2 aeps: {}".format(time2 - time1))
                 print("\n", "3-" * 60)
 
                 ##################################PLVs#####################################
                 time1 = timer()
 
+                # nparticipants = shape(raw.get_data())[0] - 1 / nchansparticipant
                 # numblocks = 10
-                intra1, inter, intra2, con = plv(raw, self.segment, blocksize, fsample, num_plvsimevents)
-                plv_intra1.append(intra1)
-                plv_inter.append(inter)
-                plv_intra2.append(intra2)
+                for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'plv' in i]):
+                    intrameans, intermean, con = plv(raw, self.segment, blocksize, fsample, num_plvsimevents, numparticipants,
+                                                     nchansparticipant)
+                    # plv_intra1.append(intra1)
+                    # plv_inter.append(inter)
+                    # plv_intra2.append(intra2)
+                    for i, intramean in enumerate(intrameans):
+                        function_dict[keyname]['values_intra' + str(i+1)] += [intramean]
+                    # function_dict[keyname]['values_intra2'] += [intra2]
+                    function_dict[keyname]['values_inter'] += [intermean]
 
-                function_dict['plv']['intra1'] += [intra1]
-                function_dict['plv']['intra2'] += [intra2]
-                function_dict['plv']['inter'] += [inter]
+                    # if self.plotpref == 'both' or self.plotpref == 'experiment':
+                    #     ax[0] = plv_plot(ax[0], con, plv_intra1, plv_inter, plv_intra2)
 
-                # if self.plotpref == 'both' or self.plotpref == 'experiment':
-                #     ax[0] = plv_plot(ax[0], con, plv_intra1, plv_inter, plv_intra2)
+                    if self.plotpref != 'none':
 
-                if self.plotpref != 'none':
-                    plot_settings = self.plot_settings(function_dict['plv']['plot_matrix'], ex_plot_matrix,
-                                                       sub_plot_matrix)
-                    if plot_settings:
-                        print('PLOTSETTINGS', plot_settings)
-                        whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
-                        ax[whichax] = plv_plot(ax[whichax], con, plv_intra1, plv_inter, plv_intra2, loc)
-
-                    for n, keyname in enumerate([i for i in list(function_dict['plv'].keys()) if 'index' in i]):
-                        plot_settings = self.plot_settings(function_dict['plv'][keyname], ex_plot_matrix,
+                        plot_settings = self.plot_settings(function_dict[keyname]['plot_matrix'], ex_plot_matrix,
                                                            sub_plot_matrix)
 
                         if plot_settings:
-                            nameslice = keyname[keyname.index('_')+1 :]
                             print('PLOTSETTINGS', plot_settings)
                             whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
-                            ax[whichax] = plv_idx_plot(ax[whichax], function_dict['plv'][nameslice], loc, nameslice)
+                            ax[whichax] = plv_plot(ax[whichax], con, loc)
+
+                        if type(function_dict[keyname]['plot_option']) == tuple:
+                            for r, indexkeyname in enumerate([i for i in list(function_dict[keyname].keys()) if 'index' in i]):
+                                # if numparticipants != 2:
+                                #     if n > 1:
+                                #         break
+                                if r in function_dict[keyname]['plot_option'] or r == 0:
+                                    plot_settings = self.plot_settings(function_dict[keyname][indexkeyname], ex_plot_matrix,
+                                                                       sub_plot_matrix)
+
+                                    if plot_settings:
+                                        nameslice = indexkeyname[indexkeyname.index('_')+1:]
+                                        print('PLOTSETTINGS', plot_settings)
+                                        whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+
+
+                                        ax[whichax] = plv_idx_plot(ax[whichax], function_dict[keyname]['values_'+nameslice], loc, nameslice)
+                        elif type(function_dict[keyname]['plot_option']) == str:
+                            allmean = []
+                            for i, intramean in enumerate(intrameans):
+                                allmean.append(function_dict[keyname]['values_intra' + str(i + 1)])
+                            allmean = zip(*allmean)
+                            allmean = list(allmean)
+                            print(1, allmean)
+                            for i, vals in enumerate(allmean):
+                                print(2, list(vals))
+                                allmean[i] = np.mean(list(vals))
+                            print(3,allmean)
+                            plot_settings = self.plot_settings(function_dict[keyname]['plot_option'], ex_plot_matrix,
+                                                               sub_plot_matrix)
+
+                            if plot_settings:
+                                # nameslice = keyname[keyname.index('_') + 1:]
+                                print('PLOTSETTINGS', plot_settings)
+                                whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                                name = 'Intrabrain PLV mean index'
+                                ax[whichax] = plv_idx_plot(ax[whichax], allmean,
+                                                           loc, name)
+
+                            plot_settings = self.plot_settings(function_dict[keyname]['index_inter'], ex_plot_matrix,
+                                                               sub_plot_matrix)
+
+                            if plot_settings:
+                                # nameslice = keyname[keyname.index('_') + 1:]
+                                print('PLOTSETTINGS', plot_settings)
+                                whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                                name = 'Interbrain PLV mean index'
+                                ax[whichax] = plv_idx_plot(ax[whichax], function_dict[keyname]['values_inter'],
+                                                           loc, name)
+
 
                 time2 = timer()
                 print("Time to compute PLV: {}".format(time2 - time1))
@@ -442,8 +487,8 @@ class TeamFlow:
 
                 ############################################################################
                 ###############Make Datastructure to make plotting easier###################
-                # AEPs
-                # for idx, participant in enumerate(aeps):
+                # values_aep
+                # for idx, participant in enumerate(values_aep):
                 #     name = 'AEP ' + str(idx + 1)
                 #     data_dict[name] = participant
 
@@ -452,7 +497,7 @@ class TeamFlow:
 
                 # for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'aep' in i]):
                 #     print(keyname)
-                #     data_dict[keyname] = function_dict[keyname]['aeps']
+                #     data_dict[keyname] = function_dict[keyname]['values_aep']
                 #
                 # # PSDs, band names are passed from config file
                 # for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'psd' in i]):
@@ -465,13 +510,13 @@ class TeamFlow:
 
                 intra1_tm, intra2_tm, inter_tm = calculate_tmflow(data_dict=function_dict)
 
-                function_dict['flow']['Intra 1'] = (intra1_tm)
-                function_dict['flow']['Intra 2'] = (intra2_tm)
-                function_dict['flow']['Inter'] = (inter_tm)
+                function_dict['flow']['values_Intra 1'] = (intra1_tm)
+                function_dict['flow']['values_Intra 2'] = (intra2_tm)
+                function_dict['flow']['values_Inter'] = (inter_tm)
 
                 if (self.segment == 2) & remfirstsample:
                     for key, value in function_dict['flow'].items():
-                        if key in ['Intra 1', 'Intra 2', 'Inter']:
+                        if key in ['values_Intra 1', 'values_Intra 2', 'values_Inter']:
                             valuecopy = value
                             valuecopy[0] = 0.0
                             function_dict['flow'][key] = valuecopy
@@ -506,7 +551,7 @@ class TeamFlow:
 
                 self.segment += 1
             else:
-                self.save_csv(data_dict, exp_name)
+                self.save_csv(function_dict, exp_name)
                 break
 
     def offline_process(self, filepath, badchans, fsample, nchansparticipant, trigchan, featurenames, channelofints,
@@ -542,7 +587,7 @@ class TeamFlow:
         plv_inter = []
         plv_intra2 = []
 
-        aeps = [[] for i in range(len(aep_data))]
+        values_aep = [[] for i in range(len(aep_data))]
         exB_AEPlist = [[] for i in range(len(aep_data))]
         exE_AEPlist = [[] for i in range(len(aep_data))]
         aepxvallist = [[] for i in range(len(aep_data))]
@@ -638,7 +683,7 @@ class TeamFlow:
 
                 ############################################################################
 
-                ########################### AEPs ##########################################
+                ########################### values_aep ##########################################
                 time1 = timer()
 
                 for idx, participant in enumerate(aep_data):
@@ -646,7 +691,7 @@ class TeamFlow:
                     epoeventval = participant[1]
                     pretrig = participant[2]
                     posttrig = participant[3]
-                    aeps[idx], exB_AEPlist[idx], exE_AEPlist[idx], aepxvallist[idx], = aep(raw, aeps[idx],
+                    values_aep[idx], exB_AEPlist[idx], exE_AEPlist[idx], aepxvallist[idx], = aep(raw, values_aep[idx],
                                                                                            exB_AEPlist[idx],
                                                                                            exE_AEPlist[idx],
                                                                                            aepxvallist[idx], fsample,
@@ -654,9 +699,9 @@ class TeamFlow:
                                                                                            epoeventval, pretrig,
                                                                                            posttrig, stimvals,
                                                                                            self.segment)
-                    print(aeps[idx])
+                    print(values_aep[idx])
                 time2 = timer()
-                print("Time to compute 2 AEPs: {}".format(time2 - time1))
+                print("Time to compute 2 values_aep: {}".format(time2 - time1))
                 print("\n", "3-" * 60)
 
                 ##################################PLVs#####################################
@@ -675,8 +720,8 @@ class TeamFlow:
                 ############################################################################
 
                 ###############Make Datastructure to make plotting easier###################
-                # AEPs
-                for idx, participant in enumerate(aeps):
+                # values_aep
+                for idx, participant in enumerate(values_aep):
                     name = 'AEP ' + str(idx + 1)
                     data_dict[name] = participant
                     # namenorm = 'AEP ' + str(idx + 1) + ' norm'
@@ -804,13 +849,14 @@ class TeamFlow:
             if this_plot_setting[0] == 'participant':
                 if self.plotpref == 'participant' or self.plotpref == 'both':
                     sub_plot_matrix[this_plot_setting[1][0], this_plot_setting[1][1]] = 1
-                    x, y = this_plot_setting[1][0] , this_plot_setting[1][1]
+                    x, y = this_plot_setting[1][0], this_plot_setting[1][1]
                     return 1, (x, y), ex_plot_matrix, sub_plot_matrix
             elif this_plot_setting[0] == 'experiment':
                 if self.plotpref == 'experiment' or self.plotpref == 'both':
                     ex_plot_matrix[this_plot_setting[1][0], this_plot_setting[1][1]] = 1
-                    x, y = this_plot_setting[1][0] , this_plot_setting[1][1] 
+                    x, y = this_plot_setting[1][0], this_plot_setting[1][1]
                     return 0, (x, y), ex_plot_matrix, sub_plot_matrix
+
         elif type(this_plot_setting) == str:
             if this_plot_setting == 'participant':
                 if self.plotpref == 'participant' or self.plotpref == 'both':
@@ -847,12 +893,18 @@ class TeamFlow:
                     return True, plot_matrix, i, j
 
     def save_csv(self, data, exp_name=None):
+        final_dict = {}
+        for n, keyname in enumerate(list(data.keys())):
+            for m, valuekeyname in enumerate([i for i in list(data[keyname].keys()) if 'values' in i]):
+                final_dict[keyname + '_' + valuekeyname] = data[keyname][valuekeyname]
+
 
         try:
-            df = pd.DataFrame.from_dict(data=data)
+            df = pd.DataFrame.from_dict(data=final_dict)
         except:
             print('WARNING: NOT ALL ARRAYS ARE THE SAME LENGTH')
-            df = pd.DataFrame.from_dict(data=data, orient='index')
+            df = pd.DataFrame.from_dict(data=final_dict, orient='index')
+            print(df)
             df = df.transpose()
         if self.option == 'offline':
             base = path.basename(self.filepath)
@@ -864,32 +916,31 @@ class TeamFlow:
         df.to_csv(path_or_buf=self.savepath + '/' + base + '_pythonvalidation.csv', index=False)
         print(df)
 
-    def make_raw(self, data, stim, fsample, units):
+    def make_raw(self, data, stim, fsample, units, channelnames):
         D = data
 
         # Make channel names for biosemi128 EEG reader (move to config file?)
-        biosemi128 = []
-        for letter in ['A', 'B', 'C', 'D']:
-            for num in range(1, 33):
-                biosemi128.append(letter + str(num))
 
+        # biosemi128 = list(range(len(data)))
+        # biosemi128 = [str(int) for int in biosemi128]
         # Specify channel types (list with length equal to total number of channels)
         print("\nStarting MNE Operations...")
         channel_types = []
-        channel_names = biosemi128.copy()
+        channel_names = channelnames.copy()
         # Assume data is from biosemi 128
-        for idx in range(len(biosemi128)):
+        for idx in range(len(channelnames)):
             channel_types.append('eeg')  # fill all channel types as eeg
-
+        print(len(D))
+        # channel_types[self.TrigChan] = 'stim'
         # Add in stim channel
         # self.stim_idx = channel_names.index(self.TrigChan)
-        stim_idx = len(D)
+        # stim_idx = len(D)
         D[np.isnan(D)] = 0
-        minval = np.amin(stim)
-        if minval != 0:
-            stim_values = stim - minval  # correct values of the stim channel (stim is always last channel)
-        else:
-            stim_values = stim
+        # minval = np.amin(stim)
+        # if minval != 0:
+        #     stim_values = stim - minval  # correct values of the stim channel (stim is always last channel)
+        # else:
+        #     stim_values = stim
         # Adjust units
         if units == "mv":
             D = D / 1000
@@ -901,11 +952,11 @@ class TeamFlow:
             print("invalid units selected")
             sys.exit(1)
 
-        D = np.vstack([D, stim_values])
-        self.stim_values = stim_values
+        # D = np.vstack([D, stim_values])
+        # self.stim_values = stim_values
 
-        channel_types.append('stim')
-        channel_names.append('STIM 001')
+
+
         info = mne.create_info(channel_names, fsample, channel_types)
         print(channel_names)
         raw = RawArray(D, info)  # generates MNE raw array from data
@@ -1021,9 +1072,9 @@ class TeamFlow:
     #     for key, value in new_dict.items():
     #         new_dict[key] = self.moving_average(value, norm=True)
     #
-    #     # for idx, aep in enumerate(aeps):
-    #     #     aeps_norm_plot[idx] = self.moving_average(aep, norm=True, initval=0.55997824)
-    #     #     aeps_raw_plot[idx] = self.moving_average(aep, norm=False)
+    #     # for idx, aep in enumerate(values_aep):
+    #     #     values_aep_norm_plot[idx] = self.moving_average(aep, norm=True, initval=0.55997824)
+    #     #     values_aep_raw_plot[idx] = self.moving_average(aep, norm=False)
     #     #
     #     # for idx, psd in enumerate(psds):
     #     #     psds_raw_plot[idx] = self.moving_average(psd, norm=False)
