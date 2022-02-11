@@ -108,15 +108,22 @@ def generate_sim_events(raw, segment, blocksize, fsample, numblocks):
     return E, sim_len
 
 
-def plv_plot(ax, con, location):
+def plv_plot(ax, con, location, nparticipants, nchanparticipant):
     x, y = location
     data = con
 
     ax[x, y].cla()  # clears the axes to prepare for new data
 
+    xlines = []
+
+    for n in range(nparticipants-1):
+        xlines.append(int(nchanparticipant*(n+1)))
+
+
     # connectivity matrix
-    ax[x, y].axvline(x=data.shape[0] / 2, color='red')  # horizontal and vertical lines for quadrants
-    ax[x, y].hlines(int(data.shape[0] / 2), 0, data.shape[0], color='red')
+    for n in xlines:
+        ax[x, y].axvline(x=n, color='red')  # horizontal and vertical lines for quadrants
+        ax[x, y].hlines(n, 0, data.shape[0], color='red')
     ax[x, y].imshow(data)  # plots the data
     ax[x, y].set(title='Connectivity Matrix', xlabel='Channel #', ylabel='Channel #')
     return ax

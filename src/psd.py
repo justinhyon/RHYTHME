@@ -21,11 +21,16 @@ def psd(raw, psd_list, chan, foilow, foihigh, fSamp):
     print("chan: ", chan)
     # data = data * 1000000
     print('Data shape (nChannels, nSamples): {}'.format(data.shape))
-
+    print(data)
+    print(fSamp)
     f, pxx1 = welch(data, fs=fSamp, window='hamming', nperseg=fSamp,
                     noverlap=0, nfft=fSamp, detrend=False)
+    # f, pxx1 = welch(data, fs=fSamp, window='hamming', noverlap=0, detrend=False)
+    print(f)
+
     psd = np.transpose(pxx1)
     psd_db = np.multiply(10, np.log10(psd))
+    print(psd_db.shape)
     freqs = range(foilow, foihigh, 1)
     sub_psd_db = psd_db[freqs, :]
 
@@ -40,7 +45,7 @@ def psd_plot(ax, psd, PSDs, freq, band, location, foilow, foihigh, subject):
     ax[x, y].cla()
     ax[x, y].text(0.1, .9, 'Average Band PSD: {}dB'.format(np.round(PSDs[-1], 2)), ha='left', va='center',
                        transform=ax[x, y].transAxes)
-    ax[x, y].set(title='Power Spectrum Density Subject {0} Band {1}'.format(subject, band), xlabel='Frequency',
+    ax[x, y].set(title='PSD Subject {0} Band {1}'.format(subject, band), xlabel='Frequency',
                       ylabel='Power Density (dB)')
     ax[x, y].axvspan(foilow, foihigh, alpha=0.3, color='green')
     ax[x, y].plot(freq, psd)
@@ -55,7 +60,7 @@ def psd_idx_plot(ax, PSDs, band, location, subject):
     for i, v in enumerate(PSDs):
         if v != 0.:
             ax[x, y].text(i + 1 - .2, v - .4, str(round(v, 2)))
-    ax[x, y].set(title='Average PSD Index Band Subject {0} Band {1}'.format(subject, band), xlabel='Segment #', ylabel='Power Density (dB)')
+    ax[x, y].set(title='Average PSDs Subject {0} Band {1}'.format(subject, band), xlabel='Segment #', ylabel='Power Density (dB)')
     return ax
 
     # fig = _plot_psd(raw, fig, freqs, psd_list, picks_list, titles_list,

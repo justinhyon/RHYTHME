@@ -1,4 +1,4 @@
-cfg.source.dataset = '/Users/jasonhyon/Desktop/JoinedData/170719_TRIAL2__EM_MD.set'; %The source of the data is configured as
+cfg.source.dataset = '/Users/jasonhyon/Documents/GitHub/teamflow/data/170719_TRIAL2__EM_MD.set'; %The source of the data is configured as
 %cfg.channel        = 1:257;                         % list with channel "names"
 %cfg.maxblocksize   = 5;                             % seconds
 cfg.speed          = 2;                             % Seconds

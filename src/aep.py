@@ -1,5 +1,5 @@
 def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize, channelofint, epoeventval,
-        pretrig, posttrig, stim_values, segment):
+        pretrig, posttrig, stim_values, segment, bands, signs):
     import numpy as np
 
     if epoeventval in stim_values:
@@ -81,18 +81,26 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
                     dat[idx] -= ch_mean
 
                 # Define peaks of interest: N1 (110 ? 150 ms), P1 (210 ? 250 ms), and N2 (310 ? 350 ms).
-                times = np.array([[.110, .150], [.210, .250], [.310, .350]])
-                for a, b in enumerate(times):
-                    for c, d in enumerate(b):
-                        times[a, c] = round(d * fsample + pretrig * fsample)
-                times = times.astype(int)
+                times = np.array(bands)
+                for i, band in enumerate(times):
+                    for j, time in enumerate(band):
+                        times[i, j] = round(time * fsample + pretrig * fsample)
+                times = times.astype(int)  # now in terms of samples
+                print(times)
                 # calculate AEP peak amplitude
                 AEPamps = []
                 for ch in dat:
-                    N1 = sum(ch[times[0, 0]:times[0, 1]]) / (times[0, 1] - times[0, 0])
-                    P1 = sum(ch[times[1, 0]:times[1, 1]]) / (times[1, 1] - times[1, 0])
-                    N2 = sum(ch[times[2, 0]:times[2, 1]]) / (times[2, 1] - times[2, 0])
-                    average = (-N1 + P1 - N2) / 3  # Confirm this equation
+                    bandavgs = []
+                    for i in range(len(times)):
+                        thisavg = sum(ch[times[i, 0]:times[i, 1]]) / (times[i, 1] - times[i, 0])
+                        if signs[i] == '-':
+                            thisavg = -1 * thisavg
+                        elif signs[i] == 'abs':
+                            thisavg = np.abs(thisavg)
+                        bandavgs.append(thisavg)
+                        # P1 = sum(ch[times[i, 0]:times[i, 1]]) / (times[i, 1] - times[i, 0])
+                        # N2 = sum(ch[times[i, 0]:times[i, 1]]) / (times[i, 1] - times[i, 0])
+                    average = np.mean(bandavgs)
                     AEPamps.append(average)
                 mAEPamp = sum(AEPamps) / len(AEPamps)
                 print("Average AEP peak amplitude: ", mAEPamp)
@@ -117,8 +125,8 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
             (len(channelofint), int(np.round((pretrig * fsample) + (posttrig * fsample)))))
 
 
-def aep_plot(ax, data, participant, fsample, aeplist, aepxvallist, exB_AEPlist, exE_AEPlist, pretrig, posttrig, segment,
-             location):
+def aep_plot(ax, data, participant, fsample, aeplist, pretrig, posttrig, segment,
+             location, bands):
     import numpy as np
 
     x = location[0]
@@ -155,15 +163,15 @@ def aep_plot(ax, data, participant, fsample, aeplist, aepxvallist, exB_AEPlist, 
 
     ax[x, y].cla()  # clears the axes to prepare for new data
     # ax[x, y + 1].cla()
-    xval = np.arange((-1 * pretrig), posttrig, (posttrig + pretrig) / int(
+    xval = np.arange((-1 * pretrig), posttrig, (posttrig + pretrig) / np.round(
         (posttrig + pretrig) * fsample))  # generate x axis values (time)
 
     # plots standard deviation if data is not 0
     if data.ndim > 1:
-        sdAEPamp = data.std(axis=0)[:-1]
+        sdAEPamp = data.std(axis=0)#[:-1]
 
-        dat = data.mean(axis=0)[:-1]
-
+        dat = data.mean(axis=0)#[:-1]
+        print(data.shape,xval.shape,dat.shape,sdAEPamp.shape)
         ax[x, y].fill_between(xval, dat + sdAEPamp, dat - sdAEPamp, facecolor='red', alpha=0.3)
 
     # plots the data against time
@@ -171,9 +179,11 @@ def aep_plot(ax, data, participant, fsample, aeplist, aepxvallist, exB_AEPlist, 
 
     # format AEP vs time plot
     ax[x, y].axvline(x=0, color='red')
-    ax[x, y].axvspan(.110, .150, alpha=0.3, color='green')
-    ax[x, y].axvspan(.210, .250, alpha=0.3, color='green')
-    ax[x, y].axvspan(.310, .350, alpha=0.3, color='green')
+    for band in bands:
+
+        ax[x, y].axvspan(band[0], band[1], alpha=0.3, color='green')
+        # ax[x, y].axvspan(.210, .250, alpha=0.3, color='green')
+        # ax[x, y].axvspan(.310, .350, alpha=0.3, color='green')
     ax[x, y].hlines(0, -1 * pretrig, posttrig)
     ax[x, y].set_title('Subject {0} AEP'.format(participant + 1))
     ax[x, y].set_xlabel('Time (s)')

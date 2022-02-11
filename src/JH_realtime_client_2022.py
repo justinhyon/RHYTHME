@@ -54,13 +54,12 @@ class TeamFlow:
 
         self.segment = 1  # segment counter
 
-        plt.ion()
+        # plt.ion()
 
-    def master_control(self, filepath, badchans, fsample, nchansparticipant, trigchan, featurenames, channelofints,
-                       foilows, foihighs, blocksize_sec, num_plvsimevents, option, delay, units,
+    def master_control(self, filepath, badchans, fsample, nchansparticipant, trigchan, blocksize_sec, num_plvsimevents,
+                       option, delay, units,
                        remfirstsample, exp_name, n_skipped_segs, wait_segs, function_dict, numparticipants,
-                       ex_plot_matrix,
-                       sub_plot_matrix, channelnames):
+                       ex_plot_matrix, sub_plot_matrix, channelnames, start_zero, resample_freq):
         self.option = option
 
         if self.option == 'offline':
@@ -69,18 +68,18 @@ class TeamFlow:
                                  function_dict, numparticipants, ex_plot_matrix,
                                  sub_plot_matrix)
         elif self.option == "realtime":
-            self.realtime_process(delay, badchans, nchansparticipant, trigchan, featurenames, channelofints,
-                                  foilows, foihighs, blocksize_sec, num_plvsimevents, units, remfirstsample,
+            self.realtime_process(delay, badchans, nchansparticipant, trigchan, blocksize_sec, num_plvsimevents, units,
+                                  remfirstsample,
                                   exp_name, n_skipped_segs, wait_segs, function_dict, ex_plot_matrix,
-                                  sub_plot_matrix, numparticipants, channelnames)
+                                  sub_plot_matrix, numparticipants, channelnames, start_zero, resample_freq)
         else:
             print('invalid setting option selected')
             sys.exit(1)
 
-    def realtime_process(self, delay, badchans, nchansparticipant, trigchan, featurenames, channelofints,
-                         foilows, foihighs, blocksize_sec, num_plvsimevents, units, remfirstsample, exp_name,
+    def realtime_process(self, delay, badchans, nchansparticipant, trigchan,blocksize_sec, num_plvsimevents, units,
+                         remfirstsample, exp_name,
                          n_skipped_segs, wait_segs, function_dict, ex_plot_matrix,
-                         sub_plot_matrix, numparticipants, channelnames):
+                         sub_plot_matrix, numparticipants, channelnames, start_zero, resample_freq):
 
         '''
         numparticipants         number of participants
@@ -91,35 +90,6 @@ class TeamFlow:
         aep_data                list of lists [[participant 1 info], [participant 2 info],...]
         '''
         self.ftc = FieldTrip.Client()
-
-        prevsamp = 0
-
-        # if filepath.endswith('.bdf'):
-        #     fullraw = read_raw_bdf(filepath, preload=True)
-        # if filepath.endswith('.set'):
-        #     fullraw = read_raw_eeglab(filepath, preload=True)
-        #
-        #
-        # fulldata = fullraw._data
-
-        # self.filepath = filepath
-        # print("Total Samples Received = {}".format(fulldata.shape[1]))
-
-        # Initiate list of lists to store psd values for one participant
-        # for keyname in [i for i in list(function_dict.keys()) if 'psd' in i]:
-        #     for n, psdname in enumerate([i for i in list(function_dict[keyname].keys()) if 'channelofint_psd' in i]):
-        #         function_dict[keyname]['psd'+str(n)] = []
-        # psds = [[] for i in range(len(channelofints))]
-        # plv_intra1 = []
-        # plv_inter = []
-        # plv_intra2 = []
-        # function_dict['plv'] = {
-        #     'plv_intra1': [],
-        #     'inter': [],
-        #     'plv_intra2': []
-        # }
-
-
 
         for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'aep' in i]):
             # function_dict[keyname]['values_aep'] = []
@@ -146,6 +116,15 @@ class TeamFlow:
         print("Waiting for first data segment from port: ", self.dataport)
         loop = True
         initial_wait = True
+
+        if start_zero:
+            prevsamp = 0
+            print("Waiting for first data segment from port: ", self.dataport)
+        else:
+            self.ftc.connect('localhost', self.dataport)  # might throw IOError
+            Head = self.ftc.getHeader()
+            prevsamp = Head.nSamples
+            print("Current sample in buffer: {0}. Waiting for new segment from port: {1}".format(prevsamp, self.dataport))
 
         while True:
             wait_time = 0
@@ -210,15 +189,21 @@ class TeamFlow:
                 print('Data shape (nChannels, nSamples): {}'.format(segmentdata.shape))
                 print(segmentdata)
 
-                stim = segmentdata[int(trigchan), :]
-                minval = np.amin(stim)
-                if minval != 0:
-                    stimvals = stim - minval  # correct values of the stim channel (stim is always last channel)
+                if trigchan != 'none':
+                    stim = segmentdata[int(trigchan), :]
+                    minval = np.amin(stim)
+                    if minval != 0:
+                        stimvals = stim - minval  # correct values of the stim channel (stim is always last channel)
+                    else:
+                        stimvals = stim
+
+                    segmentdata = np.delete(segmentdata, int(trigchan), axis=0)
                 else:
-                    stimvals = stim
-
-                segmentdata = np.delete(segmentdata, int(trigchan), axis=0)
-
+                    stimvals = np.zeros(segmentdata.shape[1])
+                    # trigchan = nchansparticipant * numparticipants
+                    # print(segmentdata.shape)
+                    np.append(segmentdata,stimvals)
+                    segmentdata = segmentdata.copy()
                 participant_data = []
                 idx = 0
                 while idx < segmentdata.shape[0]:
@@ -230,6 +215,8 @@ class TeamFlow:
 
                 participant_raws = []
                 for i, participant in enumerate(participant_data):
+                    print(channelnames)
+                    print(participant)
                     raw = self.make_raw(participant, stimvals, fsample, units, channelnames)
                     raw = self.preprocess_raw(raw, badchans[i])
                     participant_raws.append(raw)
@@ -255,6 +242,13 @@ class TeamFlow:
                 info_stim = mne.create_info(['stim'], sfreq=fsample, ch_types=['stim'])
                 raw_stim = RawArray(np.asarray(stimvals).reshape(1, len(stimvals)), info_stim)
                 raw = raw.add_channels([raw_stim], force_update_info=True)
+
+                if fsample != resample_freq:
+                    raw = raw.resample(resample_freq)
+                    print("RESAMPLED DATA SHAPE", raw.get_data().shape)
+
+                    fsample = resample_freq
+                    blocksize = round(blocksize_sec * fsample)
 
                 time2 = timer()
                 print("Time to recieve data and create MNE raw: {}".format(time2 - time1))
@@ -292,14 +286,14 @@ class TeamFlow:
                                 ax[whichax] = psd_plot(ax[whichax], this_psd_spec, psds, this_freqs, n + 1, loc,
                                                        function_dict[keyname]['foilow_band' + r],
                                                        function_dict[keyname]['foihigh_band' + r],
-                                                       subject)
+                                                       subject+1)
 
                             plot_settings = self.plot_settings(function_dict[keyname]['plotidx_band' + r],
                                                                ex_plot_matrix,
                                                                sub_plot_matrix)
                             if plot_settings:
                                 whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
-                                ax[whichax] = psd_idx_plot(ax[whichax], psds, n + 1, loc, subject)
+                                ax[whichax] = psd_idx_plot(ax[whichax], psds, n + 1, loc, subject+1)
                         # if self.plotpref == 'both' or self.plotpref == 'experiment':
                         #     band = n + 1
                         #     if band % 2 == 0:
@@ -343,7 +337,9 @@ class TeamFlow:
                             pretrig=function_dict[keyname]['pretrig'],
                             posttrig=function_dict[keyname]['posttrig'],
                             stim_values=stimvals,
-                            segment=self.segment)
+                            segment=self.segment,
+                            bands=function_dict[keyname]['bands'],
+                            signs=function_dict[keyname]['signs'])
 
                     if self.plotpref != 'none':
                         plot_settings = self.plot_settings(function_dict[keyname]['plotwv'], ex_plot_matrix,
@@ -351,15 +347,14 @@ class TeamFlow:
                         if plot_settings:
                             print('PLOTSETTINGS', plot_settings)
                             whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
-                            ax[whichax] = aep_plot(ax=ax[whichax], data=segmentaepdata, participant=int(keyname[-1]),
+                            ax[whichax] = aep_plot(ax=ax[whichax], data=segmentaepdata, participant=int(keyname[-1])-1,
                                                    fsample=fsample,
-                                                   aeplist=values_aep,
-                                                   aepxvallist=aepxvallist, exB_AEPlist=exB_AEPlist,
-                                                   exE_AEPlist=exE_AEPlist,
+                                                   aeplist=function_dict[keyname]['values_aep'],
                                                    segment=self.segment,
                                                    pretrig=function_dict[keyname]['pretrig'],
                                                    posttrig=function_dict[keyname]['posttrig'],
-                                                   location=loc
+                                                   location=loc,
+                                                    bands=function_dict[keyname]['bands']
                                                    )
                         plot_settings = self.plot_settings(function_dict[keyname]['plotidx'], ex_plot_matrix,
                                                            sub_plot_matrix)
@@ -429,7 +424,7 @@ class TeamFlow:
                         if plot_settings:
                             print('PLOTSETTINGS', plot_settings)
                             whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
-                            ax[whichax] = plv_plot(ax[whichax], con, loc)
+                            ax[whichax] = plv_plot(ax[whichax], con, loc, numparticipants, nchansparticipant)
 
                         if type(function_dict[keyname]['plot_option']) == tuple:
                             for r, indexkeyname in enumerate([i for i in list(function_dict[keyname].keys()) if 'index' in i]):
@@ -527,8 +522,12 @@ class TeamFlow:
                     ax[1] = teamflow_plot(ax[1], function_dict)
 
                 if self.plotpref != 'none':
+
+                    for fi in fig:
+                        if fi is not None:
+                            fi.tight_layout()
                     plt.pause(0.005)
-                    # plt.show()
+                    plt.show()
 
                 # self.final()
                 # if self.plotpref == 'participant':
@@ -822,21 +821,30 @@ class TeamFlow:
 
         sub_dims = sub_plot_matrix.shape
         ex_dims = ex_plot_matrix.shape
+
+        subspacevalh = sub_dims[0]
+        subspacevalw = sub_dims[1]
+        exspacevalh = sub_dims[0]
+        exspacevalw = sub_dims[1]
+
         if self.plotpref != 'none':
             if self.plotpref == 'participant':
                 # plt.close(self.fig)
                 fig2, ax2 = plt.subplots(sub_dims[0], sub_dims[1], squeeze=False,
                                          figsize=self.subwindowsize)
+                fig2.subplots_adjust(left=0.05, right=.975, top=.92, bottom=0.05, hspace=subspacevalh, wspace=subspacevalw)
             elif self.plotpref == 'experiment':
                 fig, ax = plt.subplots(ex_dims[0], ex_dims[1], figsize=self.exwindowsize)
-                fig.subplots_adjust(left=0.05, right=.975, top=.92, bottom=0.05, hspace=.4, wspace=.2)
+                fig.subplots_adjust(left=0.05, right=.975, top=.92, bottom=0.05, hspace=20, wspace=20)
+                fig.tight_layout()
 
             elif self.plotpref == 'both':
                 fig, ax = plt.subplots(ex_dims[0], ex_dims[1], figsize=self.exwindowsize)
-                fig.subplots_adjust(left=0.05, right=.975, top=.92, bottom=0.05, hspace=.4, wspace=.2)
+                fig.subplots_adjust(left=0.05, right=.975, top=.92, bottom=0.05, hspace=exspacevalh, wspace=exspacevalw)
 
                 fig2, ax2 = plt.subplots(sub_dims[0], sub_dims[1], squeeze=False,
                                          figsize=self.subwindowsize)
+                fig2.subplots_adjust(left=0.05, right=.975, top=.92, bottom=0.05, hspace=subspacevalh, wspace=subspacevalw)
         plt.ion()
 
         return [fig, fig2], [ax, ax2]
