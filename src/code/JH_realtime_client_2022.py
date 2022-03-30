@@ -538,8 +538,11 @@ class TeamFlow:
                 #     plt.draw()
 
                 if self.saving:
-                    figsavepath = self.path + '/figures/plot_' + str(self.segment) + '.jpg'
-                    plt.savefig(figsavepath)
+                    for n, fi in enumerate(fig):
+                        if fi is not None:
+                            figsavepath = self.path + '/figures/plot_' + str(self.segment) + '_' + str(n) + '.jpg'
+                            fi.savefig(figsavepath)
+
                 time2 = timer()
                 print("Time to generate plots: {}".format(time2 - time1))
                 print("\n", "5-" * 60)

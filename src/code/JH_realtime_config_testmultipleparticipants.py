@@ -36,7 +36,7 @@ ex_plot_dims = (5, 4)  # The dimensions of the plot grid to be used for the expe
                         # number of required plots, or desired plots will not be rendered
 sub_plot_dims = (2, 3)  # The dimensions of the plot grid to be used for the subject plot. Be sure to count total
                         # number of required plots, or desired plots will not be rendered
-saving = False  # True or False. toggle saving the plots. Must create a folder called "TF_figures" in path directory
+saving = True  # True or False. toggle saving the plots. Must create a folder called "TF_figures" in path directory
                 # (line 13) before running. there is currently a bug that prevents the team flow scores plot from saving
 
 # channel configurations
