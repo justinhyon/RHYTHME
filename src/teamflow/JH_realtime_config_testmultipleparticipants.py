@@ -71,11 +71,11 @@ filepath = '/Users/jasonhyon/Desktop/JoinedData/170719_TRIAL2__EM_MD.set'  # pat
 fsample = 256  # samples per second
 
 function_dict = {}
-# ----------------aep configurations----------------- erp
+# ----------------ERP configurations----------------- erp
 
-function_dict['aep1'] = {
+function_dict['ERP1'] = {
     # subject 1
-    'values_aep': [],
+    'values_ERP': [],
     'channelofint': [1, 2, 3, 33, 34, 52, 65, 66, 87, 97, 98, 110, 111, 112],
     'epoeventval': 5,  # stim channel event value desired
     'pretrig': .3,  # seconds before event
@@ -85,9 +85,9 @@ function_dict['aep1'] = {
     'plotwv': 'experiment',
     'plotidx': 'experiment'
 }
-function_dict['aep2'] = {
+function_dict['ERP2'] = {
     # subject 2
-    'values_aep': [],
+    'values_ERP': [],
     'channelofint': [129, 130, 131, 161, 162, 180, 193, 194, 215, 225, 226, 238, 239, 240],
     'epoeventval': 5,
     'pretrig': .3,
@@ -97,10 +97,9 @@ function_dict['aep2'] = {
     'plotwv': 'experiment',
     'plotidx': 'experiment'
 }
-
-# function_dict['aep3'] = {
+# function_dict['ERP3'] = {
 #     # subject 1
-#     'values_aep': [],
+#     'values_ERP': [],
 #     'channelofint': [1, 2, 3, 33, 34, 52, 65, 66, 87, 97, 98, 110, 111, 112],
 #     'epoeventval': 5,  # stim channel event value desired
 #     'pretrig': .3,  # seconds before event
@@ -110,9 +109,9 @@ function_dict['aep2'] = {
 #     'plotidx': 'experiment'
 # }
 #
-# function_dict['aep4'] = {
+# function_dict['ERP4'] = {
 #     # subject 1
-#     'values_aep': [],
+#     'values_ERP': [],
 #     'channelofint': [1, 2, 3, 33, 34, 52, 65, 66, 87, 97, 98, 110, 111, 112],
 #     'epoeventval': 5,  # stim channel event value desired
 #     'pretrig': .3,  # seconds before event
@@ -278,7 +277,7 @@ if __name__ == '__main__':
     # List of FOI low and high must be the same length
     # Length of channels list must be an integer multiple of FOI low/high list length
     # Put all features related to the same subject together, in the same feature order
-    # For AEP:
-    # AEPs should be stored in a list of lists. The wrapper lists should correspond to each of the participants.
+    # For ERP:
+    # ERPs should be stored in a list of lists. The wrapper lists should correspond to each of the participants.
     # the number of wrapper lists should equal the number of participants. The nested list should contain data
     # corresponding to a single participant

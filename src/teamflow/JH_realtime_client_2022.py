@@ -9,7 +9,7 @@ Created on Wed Jul  8 10:53:52 2020
 import sys
 from psd import psd, psd_plot, psd_idx_plot
 from plv import plv, plv_plot, plv_idx_plot
-from aep import aep, aep_plot, aep_idx_plot
+from ERP import ERP, ERP_plot, ERP_idx_plot
 from teamflow import calculate_tmflow, teamflow_plot
 from mne_realtime.externals import FieldTrip
 import time
@@ -64,7 +64,7 @@ class TeamFlow:
 
         if self.option == 'offline':
             self.offline_process(filepath, badchans, fsample, nchansparticipant, trigchan, featurenames, channelofints,
-                                 foilows, foihighs, blocksize_sec, num_plvsimevents, aep_data, units, remfirstsample,
+                                 foilows, foihighs, blocksize_sec, num_plvsimevents, ERP_data, units, remfirstsample,
                                  function_dict, numparticipants, ex_plot_matrix,
                                  sub_plot_matrix)
         elif self.option == "realtime":
@@ -87,19 +87,19 @@ class TeamFlow:
                                 for which psd is calculated
         foilows                 list
         foihighs                list
-        aep_data                list of lists [[participant 1 info], [participant 2 info],...]
+        ERP_data                list of lists [[participant 1 info], [participant 2 info],...]
         '''
         self.ftc = FieldTrip.Client()
 
-        for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'aep' in i]):
-            # function_dict[keyname]['values_aep'] = []
-            function_dict[keyname]['exB_AEPlist'] = []
-            function_dict[keyname]['exE_AEPlist'] = []
-            function_dict[keyname]['aepxvallist'] = []
-            # values_aep = [[] for i in range(len(aep_data))]
-            # exB_AEPlist = [[] for i in range(len(aep_data))]
-            # exE_AEPlist = [[] for i in range(len(aep_data))]
-            # aepxvallist = [[] for i in range(len(aep_data))]
+        for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'ERP' in i]):
+            # function_dict[keyname]['values_ERP'] = []
+            function_dict[keyname]['exB_ERPlist'] = []
+            function_dict[keyname]['exE_ERPlist'] = []
+            function_dict[keyname]['ERPxvallist'] = []
+            # values_ERP = [[] for i in range(len(ERP_data))]
+            # exB_ERPlist = [[] for i in range(len(ERP_data))]
+            # exE_ERPlist = [[] for i in range(len(ERP_data))]
+            # ERPxvallist = [[] for i in range(len(ERP_data))]
         # intra1_tm = []
         # intra2_tm = []
         # inter_tm = []
@@ -320,16 +320,16 @@ class TeamFlow:
 
                 ############################################################################
 
-                ########################### values_aep ##########################################
+                ########################### values_ERP ##########################################
                 time1 = timer()
-                for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'aep' in i]):
+                for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'ERP' in i]):
 
-                    values_aep, aepxvallist, exB_AEPlist, exE_AEPlist, segmentaepdata = \
-                        aep(raw=raw,
-                            aeplist=function_dict[keyname]['values_aep'],
-                            exB_AEPlist=function_dict[keyname]['exB_AEPlist'],
-                            exE_AEPlist=function_dict[keyname]['exE_AEPlist'],
-                            aepxvallist=function_dict[keyname]['aepxvallist'],
+                    values_ERP, ERPxvallist, exB_ERPlist, exE_ERPlist, segmentERPdata = \
+                        ERP(raw=raw,
+                            ERPlist=function_dict[keyname]['values_ERP'],
+                            exB_ERPlist=function_dict[keyname]['exB_ERPlist'],
+                            exE_ERPlist=function_dict[keyname]['exE_ERPlist'],
+                            ERPxvallist=function_dict[keyname]['ERPxvallist'],
                             fsample=fsample,
                             blocksize=blocksize,
                             channelofint=function_dict[keyname]['channelofint'],
@@ -347,9 +347,9 @@ class TeamFlow:
                         if plot_settings:
                             print('PLOTSETTINGS', plot_settings)
                             whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
-                            ax[whichax] = aep_plot(ax=ax[whichax], data=segmentaepdata, participant=int(keyname[-1])-1,
+                            ax[whichax] = ERP_plot(ax=ax[whichax], data=segmentERPdata, participant=int(keyname[-1])-1,
                                                    fsample=fsample,
-                                                   aeplist=function_dict[keyname]['values_aep'],
+                                                   ERPlist=function_dict[keyname]['values_ERP'],
                                                    segment=self.segment,
                                                    pretrig=function_dict[keyname]['pretrig'],
                                                    posttrig=function_dict[keyname]['posttrig'],
@@ -360,41 +360,41 @@ class TeamFlow:
                                                            sub_plot_matrix)
                         if plot_settings:
                             whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
-                            ax[whichax] = aep_idx_plot(ax=ax[whichax],
+                            ax[whichax] = ERP_idx_plot(ax=ax[whichax],
                                                        participant=int(keyname[-1]),
-                                                       aeplist=values_aep,
-                                                       aepxvallist=aepxvallist, exB_AEPlist=exB_AEPlist,
-                                                       exE_AEPlist=exE_AEPlist,
+                                                       ERPlist=values_ERP,
+                                                       ERPxvallist=ERPxvallist, exB_ERPlist=exB_ERPlist,
+                                                       exE_ERPlist=exE_ERPlist,
                                                        segment=self.segment, location=loc
                                                        )
 
-                    function_dict[keyname]['values_aep'] = values_aep
-                    function_dict[keyname]['aepxvallist'] = aepxvallist
-                    function_dict[keyname]['exB_AEPlist'] = exB_AEPlist
-                    function_dict[keyname]['exE_AEPlist'] = exE_AEPlist
+                    function_dict[keyname]['values_ERP'] = values_ERP
+                    function_dict[keyname]['ERPxvallist'] = ERPxvallist
+                    function_dict[keyname]['exB_ERPlist'] = exB_ERPlist
+                    function_dict[keyname]['exE_ERPlist'] = exE_ERPlist
 
                 for key, value in function_dict.items():
                     print(key, ' : ', value)
 
-                # for idx, participant in enumerate(aep_data):
+                # for idx, participant in enumerate(ERP_data):
                 #     channelofint = participant[0]
                 #     epoeventval = participant[1]
                 #     pretrig = participant[2]
                 #     posttrig = participant[3]
                 #
-                #     values_aep[idx], aepxvallist[idx], exB_AEPlist[idx], exE_AEPlist[idx], segmentaepdata = \
-                #         aep(raw, values_aep[idx], exB_AEPlist[idx], exE_AEPlist[idx], aepxvallist[idx], fsample,
+                #     values_ERP[idx], ERPxvallist[idx], exB_ERPlist[idx], exE_ERPlist[idx], segmentERPdata = \
+                #         ERP(raw, values_ERP[idx], exB_ERPlist[idx], exE_ERPlist[idx], ERPxvallist[idx], fsample,
                 #                          blocksize, channelofint, epoeventval, pretrig, posttrig, stimvals,
                 #                          self.segment)
                 #
                 #
                 #     if self.plotpref == 'both' or self.plotpref == 'experiment':
-                #         ax[0] = aep_plot(ax[0]=ax[0], data=segmentaepdata, participant=idx, fsample=fsample, aeplist=values_aep,
-                #                       aepxvallist=aepxvallist, exB_AEPlist=exB_AEPlist, exE_AEPlist=exE_AEPlist,
+                #         ax[0] = ERP_plot(ax[0]=ax[0], data=segmentERPdata, participant=idx, fsample=fsample, ERPlist=values_ERP,
+                #                       ERPxvallist=ERPxvallist, exB_ERPlist=exB_ERPlist, exE_ERPlist=exE_ERPlist,
                 #                       pretrig=pretrig, posttrig=posttrig, segment=self.segment)
 
                 time2 = timer()
-                print("Time to compute 2 aeps: {}".format(time2 - time1))
+                print("Time to compute 2 ERPs: {}".format(time2 - time1))
                 print("\n", "3-" * 60)
 
                 ##################################PLVs#####################################
@@ -482,17 +482,17 @@ class TeamFlow:
 
                 ############################################################################
                 ###############Make Datastructure to make plotting easier###################
-                # values_aep
-                # for idx, participant in enumerate(values_aep):
-                #     name = 'AEP ' + str(idx + 1)
+                # values_ERP
+                # for idx, participant in enumerate(values_ERP):
+                #     name = 'ERP ' + str(idx + 1)
                 #     data_dict[name] = participant
 
-                # namenorm = 'AEP ' + str(idx + 1) + ' norm'
+                # namenorm = 'ERP ' + str(idx + 1) + ' norm'
                 # data_dict[namenorm] = self.moving_average(participant, norm=True, rmzero=False)
 
-                # for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'aep' in i]):
+                # for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'ERP' in i]):
                 #     print(keyname)
-                #     data_dict[keyname] = function_dict[keyname]['values_aep']
+                #     data_dict[keyname] = function_dict[keyname]['values_ERP']
                 #
                 # # PSDs, band names are passed from config file
                 # for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'psd' in i]):
@@ -557,7 +557,7 @@ class TeamFlow:
                 break
 
     def offline_process(self, filepath, badchans, fsample, nchansparticipant, trigchan, featurenames, channelofints,
-                        foilows, foihighs, blocksize_sec, num_plvsimevents, aep_data, units, remfirstsample,
+                        foilows, foihighs, blocksize_sec, num_plvsimevents, ERP_data, units, remfirstsample,
                         function_dict, numparticipants, ex_plot_matrix, sub_plot_matrix):
 
         '''
@@ -566,7 +566,7 @@ class TeamFlow:
                                 for which psd is calculated
         foilows                 list
         foihighs                list
-        aep_data                list of lists [[participant 1 info], [participant 2 info],...]
+        ERP_data                list of lists [[participant 1 info], [participant 2 info],...]
         '''
 
         if filepath.endswith('.bdf'):
@@ -589,10 +589,10 @@ class TeamFlow:
         plv_inter = []
         plv_intra2 = []
 
-        values_aep = [[] for i in range(len(aep_data))]
-        exB_AEPlist = [[] for i in range(len(aep_data))]
-        exE_AEPlist = [[] for i in range(len(aep_data))]
-        aepxvallist = [[] for i in range(len(aep_data))]
+        values_ERP = [[] for i in range(len(ERP_data))]
+        exB_ERPlist = [[] for i in range(len(ERP_data))]
+        exE_ERPlist = [[] for i in range(len(ERP_data))]
+        ERPxvallist = [[] for i in range(len(ERP_data))]
         # intra1_tm = []
         # intra2_tm = []
         # inter_tm = []
@@ -685,25 +685,25 @@ class TeamFlow:
 
                 ############################################################################
 
-                ########################### values_aep ##########################################
+                ########################### values_ERP ##########################################
                 time1 = timer()
 
-                for idx, participant in enumerate(aep_data):
+                for idx, participant in enumerate(ERP_data):
                     channelofint = participant[0]
                     epoeventval = participant[1]
                     pretrig = participant[2]
                     posttrig = participant[3]
-                    values_aep[idx], exB_AEPlist[idx], exE_AEPlist[idx], aepxvallist[idx], = aep(raw, values_aep[idx],
-                                                                                           exB_AEPlist[idx],
-                                                                                           exE_AEPlist[idx],
-                                                                                           aepxvallist[idx], fsample,
+                    values_ERP[idx], exB_ERPlist[idx], exE_ERPlist[idx], ERPxvallist[idx], = ERP(raw, values_ERP[idx],
+                                                                                           exB_ERPlist[idx],
+                                                                                           exE_ERPlist[idx],
+                                                                                           ERPxvallist[idx], fsample,
                                                                                            blocksize, channelofint,
                                                                                            epoeventval, pretrig,
                                                                                            posttrig, stimvals,
                                                                                            self.segment)
-                    print(values_aep[idx])
+                    print(values_ERP[idx])
                 time2 = timer()
-                print("Time to compute 2 values_aep: {}".format(time2 - time1))
+                print("Time to compute 2 values_ERP: {}".format(time2 - time1))
                 print("\n", "3-" * 60)
 
                 ##################################PLVs#####################################
@@ -722,11 +722,11 @@ class TeamFlow:
                 ############################################################################
 
                 ###############Make Datastructure to make plotting easier###################
-                # values_aep
-                for idx, participant in enumerate(values_aep):
-                    name = 'AEP ' + str(idx + 1)
+                # values_ERP
+                for idx, participant in enumerate(values_ERP):
+                    name = 'ERP ' + str(idx + 1)
                     data_dict[name] = participant
-                    # namenorm = 'AEP ' + str(idx + 1) + ' norm'
+                    # namenorm = 'ERP ' + str(idx + 1) + ' norm'
                     # data_dict[namenorm] = self.moving_average(participant, norm=True, rmzero=False)
 
                 # PSDs, band names are passed from config fil2e
@@ -1083,9 +1083,9 @@ class TeamFlow:
     #     for key, value in new_dict.items():
     #         new_dict[key] = self.moving_average(value, norm=True)
     #
-    #     # for idx, aep in enumerate(values_aep):
-    #     #     values_aep_norm_plot[idx] = self.moving_average(aep, norm=True, initval=0.55997824)
-    #     #     values_aep_raw_plot[idx] = self.moving_average(aep, norm=False)
+    #     # for idx, ERP in enumerate(values_ERP):
+    #     #     values_ERP_norm_plot[idx] = self.moving_average(ERP, norm=True, initval=0.55997824)
+    #     #     values_ERP_raw_plot[idx] = self.moving_average(ERP, norm=False)
     #     #
     #     # for idx, psd in enumerate(psds):
     #     #     psds_raw_plot[idx] = self.moving_average(psd, norm=False)
@@ -1099,15 +1099,15 @@ class TeamFlow:
     #     intra2 = data_dict['Intra 2']
     #     inter = data_dict['Inter']
     #
-    #     if new_dict['AEP 1'][-1] != 0:
-    #         intra1.append((1 / new_dict['AEP 1'][-1]) + new_dict['Alpha1'][-1] + \
+    #     if new_dict['ERP 1'][-1] != 0:
+    #         intra1.append((1 / new_dict['ERP 1'][-1]) + new_dict['Alpha1'][-1] + \
     #                       (1 / new_dict['Beta1'][-1]))
     #     else:
     #         intra1.append((1 / 0.55997824) + new_dict['Alpha1'][-1] + \
     #                       (1 / new_dict['Beta1'][-1]))
     #
-    #     if new_dict['AEP 2'][-1] != 0:
-    #         intra2.append((1 / new_dict['AEP 2'][-1]) + new_dict['Alpha2'][-1] + (1 / new_dict['Beta2'][-1]))
+    #     if new_dict['ERP 2'][-1] != 0:
+    #         intra2.append((1 / new_dict['ERP 2'][-1]) + new_dict['Alpha2'][-1] + (1 / new_dict['Beta2'][-1]))
     #     else:
     #         intra2.append((1 / 0.55997824) + new_dict['Alpha2'][-1] + (1 / new_dict['Beta2'][-1]))
     #

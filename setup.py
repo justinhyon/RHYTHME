@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="teamflow_placeholder_name",
-    version="0.0.1",
+    version="0.0.2",
     author="Justin Hyon",
     author_email="justinhyon@gmail.com",
     description="package for inter brain realtime EEG experiments.",
@@ -15,7 +15,7 @@ setuptools.setup(
     project_urls={},
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Development Status :: 3-Alpha",
+        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
     package_dir={"": "src"},

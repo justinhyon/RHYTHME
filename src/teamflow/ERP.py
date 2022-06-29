@@ -1,16 +1,16 @@
-def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize, channelofint, epoeventval,
+def ERP(raw, ERPlist, exB_ERPlist, exE_ERPlist, ERPxvallist, fsample, blocksize, channelofint, epoeventval,
         pretrig, posttrig, stim_values, segment, bands, signs):
     import numpy as np
 
     if epoeventval in stim_values:
         indexes = [i for i, e in enumerate(stim_values) if e == epoeventval]
         # print(
-        #     "\nAEP Subject {3}:\n{0} event(s) with value {1} found in this segment at location(s) {2}, " \
-        #     "performing AEP calculation..."
+        #     "\nERP Subject {3}:\n{0} event(s) with value {1} found in this segment at location(s) {2}, " \
+        #     "performing ERP calculation..."
         #         .format(len(indexes), epoeventval, indexes, mode + 1))
         print(
-            "\nAEP :\n{0} event(s) with value {1} found in this segment at location(s) {2}, " \
-            "performing AEP calculation..."
+            "\nERP :\n{0} event(s) with value {1} found in this segment at location(s) {2}, " \
+            "performing ERP calculation..."
                 .format(len(indexes), epoeventval, indexes))
 
         # band pass filter
@@ -33,8 +33,8 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
                 goodevent = True
 
         firstloop = True
-        append_aep = False
-        mAEP1amp = []
+        append_ERP = False
+        mERP1amp = []
 
         for event in indexes:
             terminate = False
@@ -46,10 +46,10 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
                     "Event with value {} is at extreme beginning of segment. No calculation performed, "
                     "marker added.".format(epoeventval))
                 if firstloop and not goodevent:
-                    aeplist.append(0)
-                    aepxvallist.append(segment)
-                exB_AEPlist.append(segment)
-                # aep_plot(data=np.zeros(round((posttrig + pretrig) * fsample)), mode=mode)
+                    ERPlist.append(0)
+                    ERPxvallist.append(segment)
+                exB_ERPlist.append(segment)
+                # ERP_plot(data=np.zeros(round((posttrig + pretrig) * fsample)), mode=mode)
                 terminate = True
 
                 dat = np.zeros((len(channelofint), int(np.round((pretrig * fsample) + (posttrig * fsample)))))
@@ -58,15 +58,15 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
                 print("Event with value {} is at extreme end of segment. No calculation performed, marker added."
                       .format(epoeventval))
                 if firstloop and not goodevent:
-                    aeplist.append(0)
-                    aepxvallist.append(segment)
-                exE_AEPlist.append(segment)
+                    ERPlist.append(0)
+                    ERPxvallist.append(segment)
+                exE_ERPlist.append(segment)
                 terminate = True
 
                 dat = np.zeros((len(channelofint), int(np.round((pretrig * fsample) + (posttrig * fsample)))))
 
             if not terminate:
-                append_aep = True
+                append_ERP = True
                 dat = data
                 dat = np.delete(dat, np.arange(lastSamp - 1, blocksize), axis=1)
                 dat = np.delete(dat, np.arange(0, firstSamp - 1), axis=1)
@@ -87,8 +87,8 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
                         times[i, j] = round(time * fsample + pretrig * fsample)
                 times = times.astype(int)  # now in terms of samples
                 print(times)
-                # calculate AEP peak amplitude
-                AEPamps = []
+                # calculate ERP peak amplitude
+                ERPamps = []
                 for ch in dat:
                     bandavgs = []
                     for i in range(len(times)):
@@ -101,31 +101,31 @@ def aep(raw, aeplist, exB_AEPlist, exE_AEPlist, aepxvallist, fsample, blocksize,
                         # P1 = sum(ch[times[i, 0]:times[i, 1]]) / (times[i, 1] - times[i, 0])
                         # N2 = sum(ch[times[i, 0]:times[i, 1]]) / (times[i, 1] - times[i, 0])
                     average = np.mean(bandavgs)
-                    AEPamps.append(average)
-                mAEPamp = sum(AEPamps) / len(AEPamps)
-                print("Average AEP peak amplitude: ", mAEPamp)
-                aepxvallist.append(segment)
-                mAEP1amp.append(mAEPamp)
+                    ERPamps.append(average)
+                mERPamp = sum(ERPamps) / len(ERPamps)
+                print("Average ERP peak amplitude: ", mERPamp)
+                ERPxvallist.append(segment)
+                mERP1amp.append(mERPamp)
 
             firstloop = False
 
-        if append_aep and len(mAEP1amp) > 0:
-            aeplist.append(np.mean(mAEP1amp))
+        if append_ERP and len(mERP1amp) > 0:
+            ERPlist.append(np.mean(mERP1amp))
 
-        print('aepexblist for seg ', exB_AEPlist)
-        return aeplist, aepxvallist, exB_AEPlist, exE_AEPlist, dat
+        print('ERPexblist for seg ', exB_ERPlist)
+        return ERPlist, ERPxvallist, exB_ERPlist, exE_ERPlist, dat
 
     else:
-        # print("\nAEP Subject {0}:\nno events with value {1} found in this segment, AEP calculation not performed"
+        # print("\nERP Subject {0}:\nno events with value {1} found in this segment, ERP calculation not performed"
         #       .format(mode + 1, epoeventval))
-        print("\nno events with value", epoeventval, "found in this segment, AEP calculation not performed")
-        aeplist.append(0.)
-        aepxvallist.append(segment)
-        return aeplist, aepxvallist, exB_AEPlist, exE_AEPlist, np.zeros(
+        print("\nno events with value", epoeventval, "found in this segment, ERP calculation not performed")
+        ERPlist.append(0.)
+        ERPxvallist.append(segment)
+        return ERPlist, ERPxvallist, exB_ERPlist, exE_ERPlist, np.zeros(
             (len(channelofint), int(np.round((pretrig * fsample) + (posttrig * fsample)))))
 
 
-def aep_plot(ax, data, participant, fsample, aeplist, pretrig, posttrig, segment,
+def ERP_plot(ax, data, participant, fsample, ERPlist, pretrig, posttrig, segment,
              location, bands):
     import numpy as np
 
@@ -137,24 +137,24 @@ def aep_plot(ax, data, participant, fsample, aeplist, pretrig, posttrig, segment
     # elif participant == 2:
     #     y = 2
 
-    AEPs = aeplist
+    ERPs = ERPlist
 
     pretrig = pretrig
     posttrig = posttrig
     # if narticipant == 1:
     #     y = 0
-    #     AEPs = aeplist[0]
-    #     exB_AEPs = exB_AEPs1
-    #     exE_AEPs = exE_AEPs1
-    #     AEPxval = AEP1xval
+    #     ERPs = ERPlist[0]
+    #     exB_ERPs = exB_ERPs1
+    #     exE_ERPs = exE_ERPs1
+    #     ERPxval = ERP1xval
     #     pretrig = pretrig1
     #     posttrig = posttrig1
     # elif participant == 2:
     #     y = 2
-    #     AEPs = AEPs2
-    #     exB_AEPs = exB_AEPs2
-    #     exE_AEPs = exE_AEPs2
-    #     AEPxval = AEP2xval
+    #     ERPs = ERPs2
+    #     exB_ERPs = exB_ERPs2
+    #     exE_ERPs = exE_ERPs2
+    #     ERPxval = ERP2xval
     #     pretrig = pretrig2
     #     posttrig = posttrig2
 
@@ -168,16 +168,16 @@ def aep_plot(ax, data, participant, fsample, aeplist, pretrig, posttrig, segment
 
     # plots standard deviation if data is not 0
     if data.ndim > 1:
-        sdAEPamp = data.std(axis=0)#[:-1]
+        sdERPamp = data.std(axis=0)#[:-1]
 
         dat = data.mean(axis=0)#[:-1]
-        print(data.shape,xval.shape,dat.shape,sdAEPamp.shape)
-        ax[x, y].fill_between(xval, dat + sdAEPamp, dat - sdAEPamp, facecolor='red', alpha=0.3)
+        print(data.shape,xval.shape,dat.shape,sdERPamp.shape)
+        ax[x, y].fill_between(xval, dat + sdERPamp, dat - sdERPamp, facecolor='red', alpha=0.3)
 
     # plots the data against time
     ax[x, y].plot(xval, dat, color='black')
 
-    # format AEP vs time plot
+    # format ERP vs time plot
     ax[x, y].axvline(x=0, color='red')
     for band in bands:
 
@@ -185,29 +185,29 @@ def aep_plot(ax, data, participant, fsample, aeplist, pretrig, posttrig, segment
         # ax[x, y].axvspan(.210, .250, alpha=0.3, color='green')
         # ax[x, y].axvspan(.310, .350, alpha=0.3, color='green')
     ax[x, y].hlines(0, -1 * pretrig, posttrig)
-    ax[x, y].set_title('Subject {0} AEP'.format(participant + 1))
+    ax[x, y].set_title('Subject {0} ERP'.format(participant + 1))
     ax[x, y].set_xlabel('Time (s)')
     ax[x, y].set_ylabel('Volts')
 
-    # # generate plot of all AEP peak indexes
-    # x = aepxvallist
+    # # generate plot of all ERP peak indexes
+    # x = ERPxvallist
     #
-    # ax[0, y + 1].bar(x, AEPs, width=0.4)
-    # ax[0, y + 1].bar(exB_AEPlist, .000001, width=0.2, alpha=.5)
-    # ax[0, y + 1].bar(exE_AEPlist, -.000001, width=0.2, alpha=.5)
+    # ax[0, y + 1].bar(x, ERPs, width=0.4)
+    # ax[0, y + 1].bar(exB_ERPlist, .000001, width=0.2, alpha=.5)
+    # ax[0, y + 1].bar(exE_ERPlist, -.000001, width=0.2, alpha=.5)
     # # ax[0, y + 1].axis(xmin=-3)
-    # for i, v in zip(aepxvallist, AEPs):
+    # for i, v in zip(ERPxvallist, ERPs):
     #     if v != 0.:
     #         ax[0, y + 1].text(i - .5, v, str(round(v, 10)))
     # ax[0, y + 1].hlines(0, 0, segment)
-    # ax[0, y + 1].set_title('Subject {} AEP Peak Amplitude Index'.format(participant + 1))
+    # ax[0, y + 1].set_title('Subject {} ERP Peak Amplitude Index'.format(participant + 1))
     # ax[0, y + 1].set_xlabel('Segment #')
-    # ax[0, y + 1].set_ylabel('AEP Peak Index (V)')
+    # ax[0, y + 1].set_ylabel('ERP Peak Index (V)')
 
     return ax
 
 
-def aep_idx_plot(ax, participant, aeplist, aepxvallist, exB_AEPlist, exE_AEPlist, segment, location):
+def ERP_idx_plot(ax, participant, ERPlist, ERPxvallist, exB_ERPlist, exE_ERPlist, segment, location):
     # if participant == 1:
     #     y = 0
     # elif participant == 2:
@@ -217,20 +217,20 @@ def aep_idx_plot(ax, participant, aeplist, aepxvallist, exB_AEPlist, exE_AEPlist
     y = location[1]
 
     ax[x,y].cla()
-    AEPs = aeplist
-    # generate plot of all AEP peak indexes
-    # xval = aepxvallist
+    ERPs = ERPlist
+    # generate plot of all ERP peak indexes
+    # xval = ERPxvallist
 
-    ax[x, y ].bar(aepxvallist, AEPs, width=0.4)
-    ax[x, y ].bar(exB_AEPlist, .000001, width=0.2, alpha=.5)
-    ax[x, y ].bar(exE_AEPlist, -.000001, width=0.2, alpha=.5)
+    ax[x, y ].bar(ERPxvallist, ERPs, width=0.4)
+    ax[x, y ].bar(exB_ERPlist, .000001, width=0.2, alpha=.5)
+    ax[x, y ].bar(exE_ERPlist, -.000001, width=0.2, alpha=.5)
     # ax[0, y + 1].axis(xmin=-3)
-    for i, v in zip(aepxvallist, AEPs):
+    for i, v in zip(ERPxvallist, ERPs):
         if v != 0.:
             ax[x, y ].text(i - .5, v, str(round(v, 10)))
     ax[x, y ].hlines(0, 0, segment)
-    ax[x, y ].set_title('Subject {} AEP Peak Amplitude Index'.format(participant + 1))
+    ax[x, y ].set_title('Subject {} ERP Peak Amplitude Index'.format(participant + 1))
     ax[x, y ].set_xlabel('Segment #')
-    ax[x, y ].set_ylabel('AEP Peak Index (V)')
+    ax[x, y ].set_ylabel('ERP Peak Index (V)')
 
     return ax
