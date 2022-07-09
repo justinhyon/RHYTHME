@@ -13,13 +13,14 @@ import numpy as np
 # import multiprocessing.pool
 
 # insert path to directory where JH_offline_client.py is located
-path = '/Users/jasonhyon/Documents/GitHub/teamflow/src'
+path = '/Users/justinhyon/Documents/GitHub/teamflow/src'
 sys.path.insert(1, path)
 from JH_realtime_client_2022 import TeamFlow
 
 # general configurations
 option = 'realtime'
-savepath = '/Users/jasonhyon/Documents/GitHub/teamflow/misc/merge_test/rt'
+savepath = '../../non-python/misc/merge_test/rt'
+
 blocksize_sec = 5  # number of seconds per segment
 units = 'uv'  # v for volts, mv for millivolts, uv for microvolts, Mv for megavolts
 nchansparticipant = 128  # number of channels per particiapnt

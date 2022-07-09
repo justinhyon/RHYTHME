@@ -8,9 +8,9 @@ def calculate_tmflow(data_dict):
             if 'values' in innerkey:
                 new_dict[key][innerkey] = moving_average(innervalue, norm=True)
 
-    # for idx, aep in enumerate(aeplist):
-    #     aeplist_norm_plot[idx] = self.moving_average(aep, norm=True, initval=0.55997824)
-    #     aeplist_raw_plot[idx] = self.moving_average(aep, norm=False)
+    # for idx, ERP in enumerate(ERPlist):
+    #     ERPlist_norm_plot[idx] = self.moving_average(ERP, norm=True, initval=0.55997824)
+    #     ERPlist_raw_plot[idx] = self.moving_average(ERP, norm=False)
     #
     # for idx, psd in enumerate(psds):
     #     psds_raw_plot[idx] = self.moving_average(psd, norm=False)
@@ -26,10 +26,10 @@ def calculate_tmflow(data_dict):
     intra2 = data_dict['flow']['values_Intra 2']
     inter = data_dict['flow']['values_Inter']
 
-    aeplist = []
-    for n, keyname in enumerate([i for i in list(new_dict.keys()) if 'aep' in i]):
+    ERPlist = []
+    for n, keyname in enumerate([i for i in list(new_dict.keys()) if 'ERP' in i]):
 
-        aeplist.append(new_dict[keyname]['values_aep'])
+        ERPlist.append(new_dict[keyname]['values_ERP'])
 
     psd1 = {}
     psd2 = {}
@@ -45,17 +45,17 @@ def calculate_tmflow(data_dict):
     plv2 = new_dict['plv']['values_intra2']
     plvinter = new_dict['plv']['values_inter']
 
-    print(aeplist)
+    print(ERPlist)
     print(psd1)
-    if aeplist[0][-1] != 0:
-        intra1.append((1 / aeplist[0][-1]) + psd1['values_band3'][-1] + \
+    if ERPlist[0][-1] != 0:
+        intra1.append((1 / ERPlist[0][-1]) + psd1['values_band3'][-1] + \
                       (1 / psd1['values_band2'][-1]))
     else:
         intra1.append((1 / 0.55997824) + psd1['values_band3'][-1] + \
                       (1 / psd1['values_band2'][-1]))
 
-    if aeplist[1][-1] != 0:
-        intra2.append((1 / aeplist[1][-1]) + psd2['values_band3'][-1] + (1 / psd2['values_band2'][-1]))
+    if ERPlist[1][-1] != 0:
+        intra2.append((1 / ERPlist[1][-1]) + psd2['values_band3'][-1] + (1 / psd2['values_band2'][-1]))
     else:
         intra2.append((1 / 0.55997824) + psd2['values_band3'][-1] + (1 / psd2['values_band2'][-1]))
 

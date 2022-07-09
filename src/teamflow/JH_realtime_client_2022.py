@@ -19,7 +19,7 @@ from statistics import mean
 import mne
 from mne.io import RawArray, read_raw_bdf, read_raw_eeglab
 from mne.preprocessing import ICA
-from mne.connectivity import spectral_connectivity
+from mne_connectivity import spectral_connectivity_epochs
 from mne.time_frequency import psd_welch, psd_multitaper
 import matplotlib.pyplot as plt
 from timeit import default_timer as timer
@@ -540,7 +540,7 @@ class TeamFlow:
                 if self.saving:
                     for n, fi in enumerate(fig):
                         if fi is not None:
-                            figsavepath = self.path + '/figures/plot_' + str(self.segment) + '_' + str(n) + '.jpg'
+                            figsavepath = self.savepath + '/figures/plot_' + str(self.segment) + '_' + str(n) + '.jpg'
                             fi.savefig(figsavepath)
 
                 time2 = timer()

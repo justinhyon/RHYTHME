@@ -4,19 +4,21 @@ import mne
 def plv(raw, segment, blocksize, fsample, numblocks, nparticipants, nchansparticipant):
     # import numpy as np
     # import mne
-    from mne.connectivity import spectral_connectivity
+    from mne_connectivity import spectral_connectivity_epochs
 
     print("\nCalculating PLV:")
 
     E, simlen = generate_sim_events(raw, segment, blocksize, fsample,
                                     numblocks)  # Replaces events with equally spaced dummy events to calculate PLV
     epochs = mne.Epochs(raw, E, tmin=-(simlen / fsample) / 2, tmax=(simlen / fsample) / 2)
-
+    print(epochs.get_data())
     # con, freqs, times, n_epochs, n_tapers = spectral_connectivity(epochs, method='plv', sfreq=fSamp, fmin=13.,
     #                                                               fmax=50., n_jobs=6)
-    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(epochs, method='plv', sfreq=fsample, fmin=13.,
+    con_out = spectral_connectivity_epochs(epochs, method='plv', sfreq=fsample, fmin=13.,
                                                                   fmax=50., n_jobs=1)
-
+    con = con_out.get_data(output='dense')
+    # con_out.plot_circle()
+    # print(con)
     con = con.mean(axis=2)
     print('Connectivity Matrix dimensions: {}'.format(con.shape))
     # np.delete(con, 257, axis=1)
