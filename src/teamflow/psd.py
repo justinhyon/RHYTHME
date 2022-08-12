@@ -18,19 +18,19 @@ def psd(raw, psd_list, chan, foilow, foihigh, fSamp):
 
     data = raw._data
     data = data[chan, :]
-    print("chan: ", chan)
+    # print("chan: ", chan)
     # data = data * 1000000
     print('Data shape (nChannels, nSamples): {}'.format(data.shape))
-    print(data)
-    print(fSamp)
+    # print(data)
+    # print(fSamp)
     f, pxx1 = welch(data, fs=fSamp, window='hamming', nperseg=fSamp,
                     noverlap=0, nfft=fSamp, detrend=False)
     # f, pxx1 = welch(data, fs=fSamp, window='hamming', noverlap=0, detrend=False)
-    print(f)
+    # print(f)
 
     psd = np.transpose(pxx1)
     psd_db = np.multiply(10, np.log10(psd))
-    print(psd_db.shape)
+    # print(psd_db.shape)
     freqs = range(foilow, foihigh, 1)
     sub_psd_db = psd_db[freqs, :]
 

@@ -31,10 +31,10 @@ from os import path
 from scipy.signal import welch
 
 
-class TeamFlow:
-    def __init__(self, path, savepath, dataport, ex_windowsize, sub_windowsize, delay, plotpref, saving, TrigChan, ):
+class RHYTHME:
+    def __init__(self, savepath, dataport, ex_windowsize, sub_windowsize, delay, plotpref, saving, TrigChan, ):
         # user defined attributes
-        self.path = path
+        # self.path = path
         self.savepath = savepath
         self.dataport = dataport
         self.exwindowsize = ex_windowsize
@@ -187,7 +187,7 @@ class TeamFlow:
 
                 print('Samples retrieved for segment: ' + str(self.segment))
                 print('Data shape (nChannels, nSamples): {}'.format(segmentdata.shape))
-                print(segmentdata)
+                # print(segmentdata)
 
                 if trigchan != 'none':
                     stim = segmentdata[int(trigchan), :]
@@ -215,9 +215,9 @@ class TeamFlow:
 
                 participant_raws = []
                 for i, participant in enumerate(participant_data):
-                    print(channelnames)
-                    print(participant)
-                    raw = self.make_raw(participant, stimvals, fsample, units, channelnames)
+                    # print(channelnames)
+                    # print(participant)
+                    raw = self.make_raw(participant, stimvals, fsample, units, channelnames[i])
                     raw = self.preprocess_raw(raw, badchans[i])
                     participant_raws.append(raw)
                     print('Sub Data shape (nChannels, nSamples): {0} for participant {1}'.format(participant.shape,
@@ -264,7 +264,7 @@ class TeamFlow:
                 time1 = timer()
                 for subject, keyname in enumerate([i for i in list(function_dict.keys()) if 'psd' in i]):
                     for n, psdkey in enumerate([j for j in list(function_dict[keyname].keys()) if 'values' in j]):
-                        print(psdkey)
+                        # print(psdkey)
 
                         # psdnames=['band1', 'band2']  #placeholder, remove
                         r = str(n + 1)
@@ -281,7 +281,7 @@ class TeamFlow:
                             plot_settings = self.plot_settings(function_dict[keyname]['plotwv_band' + r],
                                                                ex_plot_matrix, sub_plot_matrix)
                             if plot_settings:
-                                print('PLOTSETTINGS', plot_settings)
+                                # print('PLOTSETTINGS', plot_settings)
                                 whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
                                 ax[whichax] = psd_plot(ax[whichax], this_psd_spec, psds, this_freqs, n + 1, loc,
                                                        function_dict[keyname]['foilow_band' + r],
@@ -345,7 +345,7 @@ class TeamFlow:
                         plot_settings = self.plot_settings(function_dict[keyname]['plotwv'], ex_plot_matrix,
                                                            sub_plot_matrix)
                         if plot_settings:
-                            print('PLOTSETTINGS', plot_settings)
+                            # print('PLOTSETTINGS', plot_settings)
                             whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
                             ax[whichax] = ERP_plot(ax=ax[whichax], data=segmentERPdata, participant=int(keyname[-1])-1,
                                                    fsample=fsample,
@@ -373,8 +373,8 @@ class TeamFlow:
                     function_dict[keyname]['exB_ERPlist'] = exB_ERPlist
                     function_dict[keyname]['exE_ERPlist'] = exE_ERPlist
 
-                for key, value in function_dict.items():
-                    print(key, ' : ', value)
+                # for key, value in function_dict.items():
+                #     print(key, ' : ', value)
 
                 # for idx, participant in enumerate(ERP_data):
                 #     channelofint = participant[0]
@@ -422,7 +422,7 @@ class TeamFlow:
                                                            sub_plot_matrix)
 
                         if plot_settings:
-                            print('PLOTSETTINGS', plot_settings)
+                            # print('PLOTSETTINGS', plot_settings)
                             whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
                             ax[whichax] = plv_plot(ax[whichax], con, loc, numparticipants, nchansparticipant)
 
@@ -437,7 +437,7 @@ class TeamFlow:
 
                                     if plot_settings:
                                         nameslice = indexkeyname[indexkeyname.index('_')+1:]
-                                        print('PLOTSETTINGS', plot_settings)
+                                        # print('PLOTSETTINGS', plot_settings)
                                         whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
 
 
@@ -448,17 +448,17 @@ class TeamFlow:
                                 allmean.append(function_dict[keyname]['values_intra' + str(i + 1)])
                             allmean = zip(*allmean)
                             allmean = list(allmean)
-                            print(1, allmean)
+                            # print(1, allmean)
                             for i, vals in enumerate(allmean):
                                 print(2, list(vals))
                                 allmean[i] = np.mean(list(vals))
-                            print(3,allmean)
+                            # print(3,allmean)
                             plot_settings = self.plot_settings(function_dict[keyname]['plot_option'], ex_plot_matrix,
                                                                sub_plot_matrix)
 
                             if plot_settings:
                                 # nameslice = keyname[keyname.index('_') + 1:]
-                                print('PLOTSETTINGS', plot_settings)
+                                # print('PLOTSETTINGS', plot_settings)
                                 whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
                                 name = 'Intrabrain PLV mean index'
                                 ax[whichax] = plv_idx_plot(ax[whichax], allmean,
@@ -469,7 +469,7 @@ class TeamFlow:
 
                             if plot_settings:
                                 # nameslice = keyname[keyname.index('_') + 1:]
-                                print('PLOTSETTINGS', plot_settings)
+                                # print('PLOTSETTINGS', plot_settings)
                                 whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
                                 name = 'Interbrain PLV mean index'
                                 ax[whichax] = plv_idx_plot(ax[whichax], function_dict[keyname]['values_inter'],
@@ -794,7 +794,7 @@ class TeamFlow:
                 #     plt.draw()
 
                 if self.saving:
-                    figsavepath = self.path + '/TF_figures/TF_plot_' + str(self.segment) + '.jpg'
+                    figsavepath = self.savepath + '/TF_figures/TF_plot_' + str(self.segment) + '.jpg'
                     plt.savefig(figsavepath)
                 time2 = timer()
                 print("Time to generate plots: {}".format(time2 - time1))
@@ -923,7 +923,7 @@ class TeamFlow:
         else:
             base = exp_name
 
-        print(self.savepath + '/' + base + '_pythonvalidation.csv')
+        print("SAVING CSV TO " + self.savepath + '/' + base + '_pythonvalidation.csv')
         df.to_csv(path_or_buf=self.savepath + '/' + base + '_pythonvalidation.csv', index=False)
         print(df)
 
@@ -941,7 +941,7 @@ class TeamFlow:
         # Assume data is from biosemi 128
         for idx in range(len(channelnames)):
             channel_types.append('eeg')  # fill all channel types as eeg
-        print(len(D))
+        # print(len(D))
         # channel_types[self.TrigChan] = 'stim'
         # Add in stim channel
         # self.stim_idx = channel_names.index(self.TrigChan)
@@ -969,9 +969,9 @@ class TeamFlow:
 
 
         info = mne.create_info(channel_names, fsample, channel_types)
-        print(channel_names)
+        # print(channel_names)
         raw = RawArray(D, info)  # generates MNE raw array from data
-        print("raw from make_raw", raw.get_data())
+        # print("raw from make_raw", raw.get_data())
         # ICA
         # ica = ICA(n_components=15, random_state=97)
         # ica.fit(raw)

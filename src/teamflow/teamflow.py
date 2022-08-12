@@ -3,7 +3,7 @@ def calculate_tmflow(data_dict):
     new_dict = deepcopy(data_dict)
 
     for key, value in new_dict.items():
-        print(key, ':', value)
+        # print(key, ':', value)
         for innerkey, innervalue in value.items():
             if 'values' in innerkey:
                 new_dict[key][innerkey] = moving_average(innervalue, norm=True)
@@ -21,7 +21,7 @@ def calculate_tmflow(data_dict):
     # PLV_intra2_plot = self.moving_average(plv_intra2, norm=True)
 
 
-    print(data_dict.items())
+    # print(data_dict.items())
     intra1 = data_dict['flow']['values_Intra 1']
     intra2 = data_dict['flow']['values_Intra 2']
     inter = data_dict['flow']['values_Inter']
@@ -45,8 +45,8 @@ def calculate_tmflow(data_dict):
     plv2 = new_dict['plv']['values_intra2']
     plvinter = new_dict['plv']['values_inter']
 
-    print(ERPlist)
-    print(psd1)
+    # print(ERPlist)
+    # print(psd1)
     if ERPlist[0][-1] != 0:
         intra1.append((1 / ERPlist[0][-1]) + psd1['values_band3'][-1] + \
                       (1 / psd1['values_band2'][-1]))

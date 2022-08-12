@@ -11,7 +11,7 @@ def plv(raw, segment, blocksize, fsample, numblocks, nparticipants, nchanspartic
     E, simlen = generate_sim_events(raw, segment, blocksize, fsample,
                                     numblocks)  # Replaces events with equally spaced dummy events to calculate PLV
     epochs = mne.Epochs(raw, E, tmin=-(simlen / fsample) / 2, tmax=(simlen / fsample) / 2)
-    print(epochs.get_data())
+    # print(epochs.get_data())
     # con, freqs, times, n_epochs, n_tapers = spectral_connectivity(epochs, method='plv', sfreq=fSamp, fmin=13.,
     #                                                               fmax=50., n_jobs=6)
     con_out = spectral_connectivity_epochs(epochs, method='plv', sfreq=fsample, fmin=13.,

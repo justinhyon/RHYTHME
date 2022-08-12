@@ -13,9 +13,9 @@ import numpy as np
 # import multiprocessing.pool
 
 # insert path to directory where JH_offline_client.py is located
-path = '/Users/justinhyon/Documents/GitHub/teamflow/src'
-sys.path.insert(1, path)
-from JH_realtime_client_2022 import TeamFlow
+# path = '/Users/justinhyon/Documents/GitHub/teamflow/src'
+# sys.path.insert(1, path)
+from Client import RHYTHME
 
 # general configurations
 option = 'realtime'
@@ -37,7 +37,7 @@ ex_plot_dims = (5, 4)  # The dimensions of the plot grid to be used for the expe
                         # number of required plots, or desired plots will not be rendered
 sub_plot_dims = (2, 3)  # The dimensions of the plot grid to be used for the subject plot. Be sure to count total
                         # number of required plots, or desired plots will not be rendered
-saving = False  # True or False. toggle saving the plots. Must create a folder called "TF_figures" in path directory
+saving = True  # True or False. toggle saving the plots. Must create a folder called "TF_figures" in path directory
                 # (line 13) before running. there is currently a bug that prevents the team flow scores plot from saving
 
 # channel configurations
@@ -49,12 +49,16 @@ badchans = [ # must have list of badchans or empty list for each participant
 ]
 TrigChan = 256  # python begins numbering from 0, so this is the channel number of the stim channel - 1 (not the name)
 # can be 'none' if there is no trigger channel, and a trigger channel of all 0s will be added to the end of the data
+
 channelnames = []
-for letter in ['A', 'B', 'C', 'D']:
-    for num in range(1, 33):
-        channelnames.append(letter + str(num))
-# channelnames = channelnames[0:128]
-# channelnames.append('STIM 001')
+
+# THIS CODE GENERATES THE LIST OF CHANNEL NAMES USED IN OUR EXPERIMENT AND SHOULD NOT REMAIN IN THE FINAL CODE
+for p in range(2):
+    thischannelnames = []
+    for letter in ['A', 'B', 'C', 'D']:
+        for num in range(1, 33):
+            thischannelnames.append(letter + str(num))
+    channelnames.append(thischannelnames)
 
 
 # configurations for realtime mode (ignored in offline mode)
@@ -250,7 +254,7 @@ function_dict['flow'] = {
 
 
 if __name__ == '__main__':
-    TF = TeamFlow(path, savepath, dataport, ex_windowsize, sub_windowsize, delay, plotpref, saving, TrigChan, )
+    TF = RHYTHME(savepath, dataport, ex_windowsize, sub_windowsize, delay, plotpref, saving, TrigChan, )
 
     TF.master_control(filepath=filepath,
                       badchans=badchans,
@@ -274,11 +278,4 @@ if __name__ == '__main__':
                       start_zero=start_zero,
                       resample_freq=resample_freq),
 
-    # For PSD:
-    # List of FOI low and high must be the same length
-    # Length of channels list must be an integer multiple of FOI low/high list length
-    # Put all features related to the same subject together, in the same feature order
-    # For ERP:
-    # ERPs should be stored in a list of lists. The wrapper lists should correspond to each of the participants.
-    # the number of wrapper lists should equal the number of participants. The nested list should contain data
-    # corresponding to a single participant
+

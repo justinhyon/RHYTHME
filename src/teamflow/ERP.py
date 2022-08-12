@@ -86,7 +86,7 @@ def ERP(raw, ERPlist, exB_ERPlist, exE_ERPlist, ERPxvallist, fsample, blocksize,
                     for j, time in enumerate(band):
                         times[i, j] = round(time * fsample + pretrig * fsample)
                 times = times.astype(int)  # now in terms of samples
-                print(times)
+                # print(times)
                 # calculate ERP peak amplitude
                 ERPamps = []
                 for ch in dat:
@@ -131,7 +131,7 @@ def ERP_plot(ax, data, participant, fsample, ERPlist, pretrig, posttrig, segment
 
     x = location[0]
     y = location[1]
-    print(participant)
+    # print(participant)
     # if participant == 1:
     #     y = 0
     # elif participant == 2:
@@ -171,7 +171,7 @@ def ERP_plot(ax, data, participant, fsample, ERPlist, pretrig, posttrig, segment
         sdERPamp = data.std(axis=0)#[:-1]
 
         dat = data.mean(axis=0)#[:-1]
-        print(data.shape,xval.shape,dat.shape,sdERPamp.shape)
+        # print(data.shape,xval.shape,dat.shape,sdERPamp.shape)
         ax[x, y].fill_between(xval, dat + sdERPamp, dat - sdERPamp, facecolor='red', alpha=0.3)
 
     # plots the data against time
