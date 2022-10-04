@@ -24,7 +24,7 @@ savepath = '../../non-python/misc/merge_test/rt'
 blocksize_sec = 5  # number of seconds per segment
 units = 'uv'  # v for volts, mv for millivolts, uv for microvolts, Mv for megavolts
 nchansparticipant = 128  # number of channels per particiapnt
-numparticipants = 2
+numparticipants = 1
 removefirstsample = True
 resample_freq = 256
 
@@ -37,12 +37,12 @@ ex_plot_dims = (6, 4)  # The dimensions of the plot grid to be used for the expe
                         # number of required plots, or desired plots will not be rendered
 sub_plot_dims = (2, 3)  # The dimensions of the plot grid to be used for the subject plot. Be sure to count total
                         # number of required plots, or desired plots will not be rendered
-saving = True  # True or False. toggle saving the plots. Must create a folder called "TF_figures" in path directory
+saving = False  # True or False. toggle saving the plots. Must create a folder called "TF_figures" in path directory
                 # (line 13) before running. there is currently a bug that prevents the team flow scores plot from saving
 
 # channel configurations
 badchans = [ # must have list of badchans or empty list for each participant
-    ['A32', 'B2'], # participant 1
+    # ['A32', 'B2'], # participant 1
     [], # participant 2
     [],
     []
@@ -52,9 +52,13 @@ TrigChan = 'create'  # python begins numbering from 0, so this is the channel nu
 # use option 'create' if events are being sent from FieldTrip Buffer, but there is no Trigger Channel in the data (ie.
 # realtime mode). This will create a stim channel with the events, and adds it as the last channel.
 
-channelnames = []
+channelnames = [
+    [],
+    []
+]
 
 # THIS CODE GENERATES THE LIST OF CHANNEL NAMES USED IN OUR EXPERIMENT AND SHOULD NOT REMAIN IN THE FINAL CODE
+<<<<<<< Updated upstream
 channelnum= 1
 for p in range(2):
     thischannelnames = []
