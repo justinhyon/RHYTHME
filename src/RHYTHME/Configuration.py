@@ -63,15 +63,23 @@ for p in range(2):
             thischannelnames.append(letter + str(num))
 
     channelnames.append(thischannelnames)
+=======
+# channelnames = []
+>>>>>>> Stashed changes
 # for p in range(2):
 #     thischannelnames = []
 #     for letter in ['A', 'B', 'C', 'D']:
 #         for num in range(1, 33):
+<<<<<<< Updated upstream
 #             channelnames.append(str(channelnum) + "=" + letter + str(num))
 #             channelnum+=1
 #     # channelnames.append(thischannelnames)
 # print(channelnames)
 # print ('\n'.join(channelnames))
+=======
+#             thischannelnames.append(letter + str(num))
+#     channelnames.append(thischannelnames)
+>>>>>>> Stashed changes
 
 
 # configurations for realtime mode (ignored in offline mode)
