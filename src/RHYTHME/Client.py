@@ -7,6 +7,7 @@ Created on Wed Jul  8 10:53:52 2020
 """
 
 import sys
+import struct
 from psd import psd, psd_plot, psd_idx_plot
 from plv import plv, plv_plot, plv_idx_plot
 from ERP import ERP, ERP_plot, ERP_idx_plot
@@ -58,7 +59,7 @@ class RHYTHME:
 
     def master_control(self, filepath, badchans, fsample, nchansparticipant, trigchan, blocksize_sec, num_plvsimevents,
                        option, delay, units,
-                       remfirstsample, exp_name, n_skipped_segs, wait_segs, function_dict, numparticipants,
+                       remfirstsample, exp_name, ignore_overflow, n_skipped_segs, wait_segs, function_dict, numparticipants,
                        ex_plot_matrix, sub_plot_matrix, channelnames, start_zero, resample_freq):
         self.option = option
 
@@ -70,14 +71,14 @@ class RHYTHME:
         elif self.option == "realtime":
             self.realtime_process(delay, badchans, nchansparticipant, trigchan, blocksize_sec, num_plvsimevents, units,
                                   remfirstsample,
-                                  exp_name, n_skipped_segs, wait_segs, function_dict, ex_plot_matrix,
+                                  exp_name, ignore_overflow, n_skipped_segs, wait_segs, function_dict, ex_plot_matrix,
                                   sub_plot_matrix, numparticipants, channelnames, start_zero, resample_freq)
         else:
             print('invalid setting option selected')
             sys.exit(1)
 
     def realtime_process(self, delay, badchans, nchansparticipant, trigchan,blocksize_sec, num_plvsimevents, units,
-                         remfirstsample, exp_name,
+                         remfirstsample, exp_name, ignore_overflow,
                          n_skipped_segs, wait_segs, function_dict, ex_plot_matrix,
                          sub_plot_matrix, numparticipants, channelnames, start_zero, resample_freq):
 
@@ -113,7 +114,7 @@ class RHYTHME:
             fig, ax = self.setup_plotting(ex_plot_matrix, sub_plot_matrix)
 
         print("REALTIME ANALYSIS MODE")
-        print("Waiting for first data segment from port: ", self.dataport)
+        # print("Waiting for first data segment from port: ", self.dataport)
         loop = True
         initial_wait = True
 
@@ -131,17 +132,37 @@ class RHYTHME:
             while True:
                 self.ftc.connect('localhost', self.dataport)  # might throw IOError
                 H = self.ftc.getHeader()
+                # print(H.nSamples)
                 fsample = H.fSample
                 blocksize = round(blocksize_sec * fsample)
+                # print(blocksize)
+                # print(prevsamp)
+                # print(H.nSamp/les)
                 currentsamp = H.nSamples
 
+                # segmentdata1 = self.ftc.getData(
+                #     index=(prevsamp, currentsamp - 1))
+                #
+                # # print(segmentdata1)
+                # print(type(segmentdata1))
+                #
+                # print(segmentdata1.copy())
+
                 if H.nSamples == prevsamp + blocksize:
+                    print("normal")
                     initial_wait = False
                     break
+
                 elif (currentsamp - 1 - prevsamp) <= (blocksize * (n_skipped_segs + 1)) and \
                         (H.nSamples - prevsamp) / blocksize in range(1, n_skipped_segs + 2):
                     print('\nCAUTION: SEGMENT SKIPPED')
                     prevsamp = prevsamp + blocksize
+                    break
+                elif H.nSamples > prevsamp + blocksize and ignore_overflow:
+                    initial_wait = False
+
+                    currentsamp = prevsamp + blocksize
+                    print("Skipped Data: ", (H.nSamples - currentsamp))
                     break
                 else:
                     time.sleep(delay)
@@ -182,14 +203,24 @@ class RHYTHME:
 
                 segmentdata = self.ftc.getData(
                     index=(prevsamp, currentsamp - 1)).transpose()  # receive data from buffer
+                print('Data shape (nChannels, nSamples): {}'.format(segmentdata.shape))
+
+                ev = self.ftc.getEvents()#index=(prevsamp, currentsamp - 1))
+                # print("EVENTS: ", ev)
+                # for this_ev in ev:
+                #     print(this_ev.sample)
+                # print("Last Event: ", ev_last)
+
+                if trigchan == 'create':
+
+                    gen_stim_channel = self.create_stim_channel(ev, prevsamp, currentsamp)
 
                 prevsamp = currentsamp
 
                 print('Samples retrieved for segment: ' + str(self.segment))
-                print('Data shape (nChannels, nSamples): {}'.format(segmentdata.shape))
                 # print(segmentdata)
 
-                if trigchan != 'none':
+                if type(trigchan) == int:
                     stim = segmentdata[int(trigchan), :]
                     minval = np.amin(stim)
                     if minval != 0:
@@ -198,12 +229,24 @@ class RHYTHME:
                         stimvals = stim
 
                     segmentdata = np.delete(segmentdata, int(trigchan), axis=0)
-                else:
+                    self.stim_idx = str(self.TrigChan)
+                    print(stimvals)
+                elif trigchan == 'none':
                     stimvals = np.zeros(segmentdata.shape[1])
                     # trigchan = nchansparticipant * numparticipants
                     # print(segmentdata.shape)
                     np.append(segmentdata,stimvals)
+                    self.stim_idx = str(len(segmentdata))
                     segmentdata = segmentdata.copy()
+                elif trigchan == 'create':
+                    stimvals = gen_stim_channel
+                    np.append(segmentdata, stimvals)
+                    self.stim_idx = str(len(segmentdata))
+                    segmentdata = segmentdata.copy()
+                else:
+                    "INVALID OPTION FOR TrigChan"
+                    exit(1)
+                print('Data shape (nChannels, nSamples): {}'.format(segmentdata.shape))
                 participant_data = []
                 idx = 0
                 while idx < segmentdata.shape[0]:
@@ -216,6 +259,7 @@ class RHYTHME:
                 participant_raws = []
                 for i, participant in enumerate(participant_data):
                     # print(channelnames)
+                    print("part")
                     # print(participant)
                     raw = self.make_raw(participant, stimvals, fsample, units, channelnames[i])
                     raw = self.preprocess_raw(raw, badchans[i])
@@ -253,9 +297,12 @@ class RHYTHME:
                 time2 = timer()
                 print("Time to recieve data and create MNE raw: {}".format(time2 - time1))
                 # print("\n", "1-" * 60)
-                self.stim_idx = str(self.TrigChan)
+
                 self.stim_values = stimvals
                 print('STIM CHANNEL: ', self.stim_idx, self.stim_values)
+                # for i in stimvals:
+                #     if i != 0:
+                #         print("TRIGGER")
 
                 ex_plot_matrix.fill(0)
                 sub_plot_matrix.fill(0)
@@ -281,7 +328,7 @@ class RHYTHME:
                             plot_settings = self.plot_settings(function_dict[keyname]['plotwv_band' + r],
                                                                ex_plot_matrix, sub_plot_matrix)
                             if plot_settings:
-                                # print('PLOTSETTINGS', plot_settings)
+                                print('PLOTSETTINGS', plot_settings)
                                 whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
                                 ax[whichax] = psd_plot(ax[whichax], this_psd_spec, psds, this_freqs, n + 1, loc,
                                                        function_dict[keyname]['foilow_band' + r],
@@ -361,7 +408,7 @@ class RHYTHME:
                         if plot_settings:
                             whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
                             ax[whichax] = ERP_idx_plot(ax=ax[whichax],
-                                                       participant=int(keyname[-1]),
+                                                       participant=int(keyname[-1])-1,
                                                        ERPlist=values_ERP,
                                                        ERPxvallist=ERPxvallist, exB_ERPlist=exB_ERPlist,
                                                        exE_ERPlist=exE_ERPlist,
@@ -482,39 +529,19 @@ class RHYTHME:
 
                 ############################################################################
                 ###############Make Datastructure to make plotting easier###################
-                # values_ERP
-                # for idx, participant in enumerate(values_ERP):
-                #     name = 'ERP ' + str(idx + 1)
-                #     data_dict[name] = participant
 
-                # namenorm = 'ERP ' + str(idx + 1) + ' norm'
-                # data_dict[namenorm] = self.moving_average(participant, norm=True, rmzero=False)
-
-                # for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'ERP' in i]):
-                #     print(keyname)
-                #     data_dict[keyname] = function_dict[keyname]['values_ERP']
+                # intra1_tm, intra2_tm, inter_tm = calculate_tmflow(data_dict=function_dict)
                 #
-                # # PSDs, band names are passed from config file
-                # for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'psd' in i]):
-                #     for r, psdkey in enumerate([j for j in list(function_dict[keyname].keys()) if 'psd' in j]):
-                #         data_dict[keyname + psdkey] = function_dict[keyname][psdkey]
-
-                # data_dict['PLV 1'] = plv_intra1
-                # data_dict['PLV 2'] = plv_intra2
-                # data_dict['PLV inter'] = plv_inter
-
-                intra1_tm, intra2_tm, inter_tm = calculate_tmflow(data_dict=function_dict)
-
-                function_dict['flow']['values_Intra 1'] = (intra1_tm)
-                function_dict['flow']['values_Intra 2'] = (intra2_tm)
-                function_dict['flow']['values_Inter'] = (inter_tm)
-
-                if (self.segment == 2) & remfirstsample:
-                    for key, value in function_dict['flow'].items():
-                        if key in ['values_Intra 1', 'values_Intra 2', 'values_Inter']:
-                            valuecopy = value
-                            valuecopy[0] = 0.0
-                            function_dict['flow'][key] = valuecopy
+                # function_dict['flow']['values_Intra 1'] = (intra1_tm)
+                # function_dict['flow']['values_Intra 2'] = (intra2_tm)
+                # function_dict['flow']['values_Inter'] = (inter_tm)
+                #
+                # if (self.segment == 2) & remfirstsample:
+                #     for key, value in function_dict['flow'].items():
+                #         if key in ['values_Intra 1', 'values_Intra 2', 'values_Inter']:
+                #             valuecopy = value
+                #             valuecopy[0] = 0.0
+                #             function_dict['flow'][key] = valuecopy
                 print(function_dict.values())
 
                 ############################################################################
@@ -537,7 +564,7 @@ class RHYTHME:
                 #     plt.pause(.005)
                 #     plt.draw()
 
-                if self.saving:
+                if self.saving and self.plotpref != 'none':
                     for n, fi in enumerate(fig):
                         if fi is not None:
                             figsavepath = self.savepath + '/figures/plot_' + str(self.segment) + '_' + str(n) + '.jpg'
@@ -1025,6 +1052,25 @@ class RHYTHME:
     #     E = mne.find_events(PLV_raw, stim_channel='PLVstim')
     #     print("Simulated events in segment {0}: {1}".format(self.segment, E))
     #     return E
+
+    def create_stim_channel(self, ev_arr, seg_start, seg_end):
+        event_locations = []
+        event_values = []
+
+        for event in reversed(ev_arr):
+            if seg_start < event.sample < seg_end:
+                event_locations.append(event.sample - seg_start)
+                event_values.append(event.value)
+            if event.sample < seg_start:
+                break
+
+        stim_chan = np.zeros(seg_end-seg_start)
+
+        for n, loc in enumerate(event_locations):
+            stim_chan[loc-1] = event_values[n]
+
+        print(stim_chan)
+        return(stim_chan)
 
     def moving_average(self, l, avg=True, norm=False, p=False, rmzero=True, initval=10):
         a = []

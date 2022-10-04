@@ -17,6 +17,7 @@ def psd(raw, psd_list, chan, foilow, foihigh, fSamp):
     #                                     area_mode='std', average=True)
 
     data = raw._data
+    print(chan)
     data = data[chan, :]
     # print("chan: ", chan)
     # data = data * 1000000
