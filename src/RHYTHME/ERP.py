@@ -1,3 +1,4 @@
+import statistics
 def ERP(raw, ERPlist, exB_ERPlist, exE_ERPlist, ERPxvallist, fsample, blocksize, channelofint, epoeventval,
         pretrig, posttrig, stim_values, segment, bands, signs):
     import numpy as np
@@ -57,6 +58,7 @@ def ERP(raw, ERPlist, exB_ERPlist, exE_ERPlist, ERPxvallist, fsample, blocksize,
             if lastSamp > blocksize:
                 print("Event with value {} is at extreme end of segment. No calculation performed, marker added."
                       .format(epoeventval))
+                print(lastSamp, blocksize, event, posttrig, fsample)
                 if firstloop and not goodevent:
                     ERPlist.append(0)
                     ERPxvallist.append(segment)
@@ -107,12 +109,17 @@ def ERP(raw, ERPlist, exB_ERPlist, exE_ERPlist, ERPxvallist, fsample, blocksize,
                 ERPxvallist.append(segment)
                 mERP1amp.append(mERPamp)
 
+                ERPlist.append(mERPamp)
+
             firstloop = False
 
-        if append_ERP and len(mERP1amp) > 0:
-            ERPlist.append(np.mean(mERP1amp))
+        # if append_ERP and len(mERP1amp) > 0:
+        #     ERPlist.append(np.mean(mERP1amp))
 
         print('ERPexblist for seg ', exB_ERPlist)
+        print('ERPexElist for seg ', exE_ERPlist)
+        print(ERPxvallist)
+        print(ERPlist)
         return ERPlist, ERPxvallist, exB_ERPlist, exE_ERPlist, dat
 
     else:
@@ -137,10 +144,10 @@ def ERP_plot(ax, data, participant, fsample, ERPlist, pretrig, posttrig, segment
     # elif participant == 2:
     #     y = 2
 
-    ERPs = ERPlist
-
-    pretrig = pretrig
-    posttrig = posttrig
+    # ERPs = ERPlist
+    #
+    # pretrig = pretrig
+    # posttrig = posttrig
     # if narticipant == 1:
     #     y = 0
     #     ERPs = ERPlist[0]
@@ -160,6 +167,7 @@ def ERP_plot(ax, data, participant, fsample, ERPlist, pretrig, posttrig, segment
 
     # data = raw.get_data()
     dat = data.transpose()
+    # dat = 1000 * dat
 
     ax[x, y].cla()  # clears the axes to prepare for new data
     # ax[x, y + 1].cla()
@@ -221,9 +229,14 @@ def ERP_idx_plot(ax, participant, ERPlist, ERPxvallist, exB_ERPlist, exE_ERPlist
     # generate plot of all ERP peak indexes
     # xval = ERPxvallist
 
+    if ERPs == []:
+        markheight = .000001
+    else:
+        markheight = statistics.mean(ERPs)
+
     ax[x, y ].bar(ERPxvallist, ERPs, width=0.4)
-    ax[x, y ].bar(exB_ERPlist, .000001, width=0.2, alpha=.5)
-    ax[x, y ].bar(exE_ERPlist, -.000001, width=0.2, alpha=.5)
+    ax[x, y ].bar(exB_ERPlist, markheight, width=0.2, alpha=.5)
+    ax[x, y ].bar(exE_ERPlist, -1*markheight, width=0.2, alpha=.5)
     # ax[0, y + 1].axis(xmin=-3)
     for i, v in zip(ERPxvallist, ERPs):
         if v != 0.:

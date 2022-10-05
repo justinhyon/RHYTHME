@@ -293,13 +293,14 @@ class RHYTHME:
 
                     fsample = resample_freq
                     blocksize = round(blocksize_sec * fsample)
+                    stimvals = raw.get_data()[int(self.stim_idx)]
 
                 time2 = timer()
                 print("Time to recieve data and create MNE raw: {}".format(time2 - time1))
                 # print("\n", "1-" * 60)
 
                 self.stim_values = stimvals
-                print('STIM CHANNEL: ', self.stim_idx, self.stim_values)
+                print('STIM CHANNEL: ', self.stim_idx, len(stimvals))
                 # for i in stimvals:
                 #     if i != 0:
                 #         print("TRIGGER")

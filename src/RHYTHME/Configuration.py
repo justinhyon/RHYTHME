@@ -33,7 +33,7 @@ plotpref = 'experiment'  # use either 'participant'(teamflow score plot), 'exper
                             # toggle showing the plots
 ex_windowsize = (24, 12)  # size of the figures
 sub_windowsize = (36, 12)  # size of the figures
-ex_plot_dims = (6, 4)  # The dimensions of the plot grid to be used for the experimenter plot. Be sure to count total
+ex_plot_dims = (3, 4)  # The dimensions of the plot grid to be used for the experimenter plot. Be sure to count total
                         # number of required plots, or desired plots will not be rendered
 sub_plot_dims = (2, 3)  # The dimensions of the plot grid to be used for the subject plot. Be sure to count total
                         # number of required plots, or desired plots will not be rendered
@@ -53,12 +53,11 @@ TrigChan = 'create'  # python begins numbering from 0, so this is the channel nu
 # realtime mode). This will create a stim channel with the events, and adds it as the last channel.
 
 channelnames = [
-    [],
-    []
+
 ]
 
 # THIS CODE GENERATES THE LIST OF CHANNEL NAMES USED IN OUR EXPERIMENT AND SHOULD NOT REMAIN IN THE FINAL CODE
-<<<<<<< Updated upstream
+# <<<<<<< Updated upstream
 channelnum= 1
 for p in range(2):
     thischannelnames = []
@@ -67,23 +66,23 @@ for p in range(2):
             thischannelnames.append(letter + str(num))
 
     channelnames.append(thischannelnames)
-=======
+# =======
 # channelnames = []
->>>>>>> Stashed changes
+# >>>>>>> Stashed changes
 # for p in range(2):
 #     thischannelnames = []
 #     for letter in ['A', 'B', 'C', 'D']:
 #         for num in range(1, 33):
-<<<<<<< Updated upstream
+# <<<<<<< Updated upstream
 #             channelnames.append(str(channelnum) + "=" + letter + str(num))
 #             channelnum+=1
 #     # channelnames.append(thischannelnames)
 # print(channelnames)
 # print ('\n'.join(channelnames))
-=======
+# =======
 #             thischannelnames.append(letter + str(num))
 #     channelnames.append(thischannelnames)
->>>>>>> Stashed changes
+# >>>>>>> Stashed changes
 
 
 # configurations for realtime mode (ignored in offline mode)
@@ -109,25 +108,26 @@ function_dict['ERP1'] = {
     'values_ERP': [],
     'channelofint': [1, 2, 3, 33, 34, 52, 65, 66, 87, 97, 98, 110, 111, 112],
     'epoeventval': 7,  # stim channel event value desired
-    'pretrig': .3,  # seconds before event
-    'posttrig': .5,  # seconds after event
+    'pretrig': 1,  # seconds before event
+    'posttrig': 1,  # seconds after event
     'bands': [[.110, .150], [.210, .250], [.310, .350]],
     'signs': ['-', '+', '-'], #  + for same sign of the average value in the corresponding band, - to reverse the sign, abs for absolute value
     'plotwv': 'experiment',
-    'plotidx': 'experiment'
+    'plotidx': 'experiment',
+
 }
-function_dict['ERP2'] = {
-    # subject 2
-    'values_ERP': [],
-    'channelofint': [129, 130, 131, 161, 162, 180, 193, 194, 215, 225, 226, 238, 239, 240],
-    'epoeventval': 5,
-    'pretrig': .3,
-    'posttrig': .5,
-    'bands': [[.110, .150], [.210, .250], [.310, .350]],
-    'signs': ['-', '+', '-'],
-    'plotwv': 'experiment',
-    'plotidx': 'experiment'
-}
+# function_dict['ERP2'] = {
+#     # subject 2
+#     'values_ERP': [],
+#     'channelofint': [129, 130, 131, 161, 162, 180, 193, 194, 215, 225, 226, 238, 239, 240],
+#     'epoeventval': 5,
+#     'pretrig': .3,
+#     'posttrig': .5,
+#     'bands': [[.110, .150], [.210, .250], [.310, .350]],
+#     'signs': ['-', '+', '-'],
+#     'plotwv': 'experiment',
+#     'plotidx': 'experiment'
+# }
 # # function_dict['ERP3'] = {
 # #     # subject 1
 # #     'values_ERP': [],
@@ -209,35 +209,35 @@ function_dict['psd1'] = {
     'plotidx_band4': 'experiment',
 }
 
-function_dict['psd2'] = {
-    'values_band1': [],
-    'channelofint_band1': list(range(129, 161)),#[244, 245, 247, 254],  # [117, 118, 120, 127] actual channels of interest subject 1
-    'foilow_band1': 30,
-    'foihigh_band1': 119,
-    'plotwv_band1': 'experiment',
-    'plotidx_band1': 'experiment',
-
-    'values_band2': [],
-    'channelofint_band2': list(range(161, 193)),#[244, 245, 247, 254],  # [117, 118, 120, 127] actual channels of interest subject 1
-    'foilow_band2': 12,
-    'foihigh_band2': 29,
-    'plotwv_band2': 'experiment',
-    'plotidx_band2': 'experiment',
-
-    'values_band3': [],
-    'channelofint_band3': list(range(193, 225)),#[244, 245, 247, 254],  # [117, 118, 120, 127] actual channels of interest subject 1
-    'foilow_band3': 7,
-    'foihigh_band3': 11,
-    'plotwv_band3': 'experiment',
-    'plotidx_band3': 'experiment',
-
-    'values_band4': [],
-    'channelofint_band4': list(range(225, 256)),#[116, 117, 119, 126],  # [117, 118, 120, 127] actual channels of interest subject 1
-    'foilow_band4': 7,
-    'foihigh_band4': 11,
-    'plotwv_band4': 'experiment',
-    'plotidx_band4': 'experiment',
-}
+# function_dict['psd2'] = {
+#     'values_band1': [],
+#     'channelofint_band1': list(range(129, 161)),#[244, 245, 247, 254],  # [117, 118, 120, 127] actual channels of interest subject 1
+#     'foilow_band1': 30,
+#     'foihigh_band1': 119,
+#     'plotwv_band1': 'experiment',
+#     'plotidx_band1': 'experiment',
+#
+#     'values_band2': [],
+#     'channelofint_band2': list(range(161, 193)),#[244, 245, 247, 254],  # [117, 118, 120, 127] actual channels of interest subject 1
+#     'foilow_band2': 12,
+#     'foihigh_band2': 29,
+#     'plotwv_band2': 'experiment',
+#     'plotidx_band2': 'experiment',
+#
+#     'values_band3': [],
+#     'channelofint_band3': list(range(193, 225)),#[244, 245, 247, 254],  # [117, 118, 120, 127] actual channels of interest subject 1
+#     'foilow_band3': 7,
+#     'foihigh_band3': 11,
+#     'plotwv_band3': 'experiment',
+#     'plotidx_band3': 'experiment',
+#
+#     'values_band4': [],
+#     'channelofint_band4': list(range(225, 256)),#[116, 117, 119, 126],  # [117, 118, 120, 127] actual channels of interest subject 1
+#     'foilow_band4': 7,
+#     'foihigh_band4': 11,
+#     'plotwv_band4': 'experiment',
+#     'plotidx_band4': 'experiment',
+# }
 #
 # # function_dict['psd3'] = {
 # #     'values_band1': [],
