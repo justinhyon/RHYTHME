@@ -25,6 +25,7 @@ import logging
 import sys
 
 from rhythme import __version__
+from .Configuration import run_rhythme
 
 __author__ = "justinhyon"
 __copyright__ = "justinhyon"
@@ -72,13 +73,13 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.ArgumentParser(description="Just a Fibonacci demonstration")
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         "--version",
         action="version",
         version=f"RHYTHME {__version__}",
     )
-    parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
+    parser.add_argument(dest="cf", help="path to configuration toml file", metavar="config")
     parser.add_argument(
         "-v",
         "--verbose",
@@ -121,10 +122,7 @@ def main(args):
           (for example  ``["--verbose", "42"]``).
     """
     args = parse_args(args)
-    setup_logging(args.loglevel)
-    _logger.debug("Starting crazy calculations...")
-    print(f"The {args.n}-th Fibonacci number is {fib(args.n)}")
-    _logger.info("Script ends here")
+    run_rhythme(args.cf)
 
 
 def run():
