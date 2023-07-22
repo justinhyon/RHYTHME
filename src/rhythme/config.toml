@@ -1,5 +1,5 @@
 option = "realtime"
-savepath = "../../non-python/misc/merge_test/rt"
+savepath = "non-python"
 blocksize_sec = 5
 units = "uv"
 nchansparticipant = 128

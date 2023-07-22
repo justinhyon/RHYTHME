@@ -52,3 +52,6 @@ MANIFEST
 .venv*/
 .conda*/
 .python-version
+
+#figures saved from testing
+src/rhythme/non-python/figures/*
