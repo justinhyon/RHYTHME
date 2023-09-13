@@ -152,7 +152,6 @@ class RHYTHME:
                     print("normal")
                     initial_wait = False
                     break
-
                 elif (currentsamp - 1 - prevsamp) <= (blocksize * (n_skipped_segs + 1)) and \
                         (H.nSamples - prevsamp) / blocksize in range(1, n_skipped_segs + 2):
                     print('\nCAUTION: SEGMENT SKIPPED')

@@ -22,7 +22,7 @@ def run_rhythme(path):
     with open(str(path)) as fileObj:
         content = fileObj.read()
         config_dict = toml.loads(content)
-    print(str(path))
+    # print(str(path))
     # insert path to directory where JH_offline_client.py is located
     # path = '/Users/justinhyon/Documents/GitHub/teamflow/src'
     # sys.path.insert(1, path)
