@@ -8,7 +8,10 @@
 VERSION 1.0.0
 """
 import numpy as np
-from .Client import RHYTHME
+try:
+    from .Client import RHYTHME
+except ImportError:
+    from Client import RHYTHME
 # import multiprocessing.pool
 import toml
 import argparse
@@ -21,69 +24,70 @@ import sys
 def run_rhythme(path):
     with open(str(path)) as fileObj:
         content = fileObj.read()
-        config_dict = toml.loads(content)
+        all_config = toml.loads(content)
     # print(str(path))
     # insert path to directory where JH_offline_client.py is located
     # path = '/Users/justinhyon/Documents/GitHub/teamflow/src'
     # sys.path.insert(1, path)
 
     # general configurations
-    option = config_dict['option']
-    savepath = config_dict['savepath']
+    general_config = all_config['general_config']
+    option = general_config['option']
+    savepath = general_config['savepath']
 
-    blocksize_sec = config_dict['blocksize_sec']  # number of seconds per segment
-    units = config_dict['units']  # v for volts, mv for millivolts, uv for microvolts, Mv for megavolts
-    nchansparticipant = config_dict['nchansparticipant']  # number of channels per particiapnt
-    numparticipants = config_dict['numparticipants']
-    removefirstsample = config_dict['removefirstsample']
-    resample_freq = config_dict['resample_freq']
+    blocksize_sec = general_config['blocksize_sec']  # number of seconds per segment
+    units = general_config['units']  # v for volts, mv for millivolts, uv for microvolts, Mv for megavolts
+    nchansparticipant = general_config['nchansparticipant']  # number of channels per particiapnt
+    numparticipants = general_config['numparticipants']
+    removefirstsample = general_config['removefirstsample']
+    resample_freq = general_config['resample_freq']
 
     # plotting configurations
-    plotpref = config_dict[
+    plotpref = general_config[
         'plotpref']  # use either 'participant'(teamflow score plot), 'experiment'(detailed plot), 'both', or 'none' to
     # toggle showing the plots
-    ex_windowsize = config_dict['ex_windowsize']  # size of the figures
-    sub_windowsize = config_dict['sub_windowsize']  # size of the figures
-    ex_plot_dims = config_dict[
+    ex_windowsize = general_config['ex_windowsize']  # size of the figures
+    sub_windowsize = general_config['sub_windowsize']  # size of the figures
+    ex_plot_dims = general_config[
         'ex_plot_dims']  # The dimensions of the plot grid to be used for the experimenter plot. Be sure to count total
     # number of required plots, or desired plots will not be rendered
-    sub_plot_dims = config_dict[
+    sub_plot_dims = general_config[
         'sub_plot_dims']  # The dimensions of the plot grid to be used for the subject plot. Be sure to count total
     # number of required plots, or desired plots will not be rendered
-    saving = config_dict[
+    saving = general_config[
         'saving']  # True or False. toggle saving the plots. Must create a folder called "TF_figures" in path directory
     # (line 13) before running. there is currently a bug that prevents the team flow scores plot from saving
 
     # channel configurations
-    badchans = config_dict['badchans']
-    TrigChan = config_dict['TrigChan']  # python begins numbering from 0, so this is the channel number of the stim channel - 1 (not the name)
+    badchans = general_config['badchans']
+    TrigChan = general_config['TrigChan']  # python begins numbering from 0, so this is the channel number of the stim channel - 1 (not the name)
     # can be 'none' if there is no trigger channel, and a trigger channel of all 0s will be added to the end of the data
     # use option 'create' if events are being sent from FieldTrip Buffer, but there is no Trigger Channel in the data (ie.
     # realtime mode). This will create a stim channel with the events, and adds it as the last channel.
 
-    channelnames = config_dict['channelnames']
+    channelnames = all_config['channelnames_dict']['channelnames']
 
     # configurations for realtime mode (ignored in offline mode)
-    start_zero = config_dict['start_zero']  # whether the experiment must start from the first sample (empty buffer), or False for the current
+    start_zero = general_config['start_zero']  # whether the experiment must start from the first sample (empty buffer), or False for the current
     #  sample in the buffer
-    exp_name = config_dict['exp_name']
-    dataport = config_dict['dataport'] # use 3113 for eeg machine
-    ignore_overflow = config_dict['ignore_overflow']  # throw out samples past the desired block size
-    n_skipped_segs = config_dict['n_skipped_segs'] # max number of segments to skip in between 2 processed segments due
+    exp_name = general_config['exp_name']
+    dataport = general_config['dataport'] # use 3113 for eeg machine
+    ignore_overflow = general_config['ignore_overflow']  # throw out samples past the desired block size
+    n_skipped_segs = general_config['n_skipped_segs'] # max number of segments to skip in between 2 processed segments due
     # to runtime
-    wait_segs = config_dict['wait_segs']  # How many segments worth of time (blocksize_sec) to wait for new data before quitting the pipeline. does
+    wait_segs = general_config['wait_segs']  # How many segments worth of time (blocksize_sec) to wait for new data before quitting the pipeline. does
     # not apply to the initial wait for first segment to arrive
-    delay = config_dict['delay']  # how long to wait before checking again for new samples in the buffer
+    delay = general_config['delay']  # how long to wait before checking again for new samples in the buffer
 
     # configurations for offline mode (ignored in realtime mode)
-    filepath = config_dict['filepath']  # path to the  bdf data file
-    fsample = config_dict['fsample']  # samples per second
+    filepath = general_config['filepath']  # path to the  bdf data file
+    fsample = general_config['fsample']  # samples per second
 
-    function_dict = config_dict['function_dict']
+    function_dict = all_config['function_dict']
 
-    num_plvsimevents = config_dict['num_plvsimevents']  # number of simulated events for each PLV segment
-    channelofint_plv = config_dict['channelofint_plv']
-    frqofint = config_dict['frqofint']
+    num_plvsimevents = general_config['num_plvsimevents']  # number of simulated events for each PLV segment
+    channelofint_plv = general_config['channelofint_plv']
+    frqofint = general_config['frqofint']
 
     # function_dict['psd2'] = {
     #     'values_band1': [],

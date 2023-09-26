@@ -25,8 +25,10 @@ import logging
 import sys
 
 from rhythme import __version__
-from .Configuration import run_rhythme
-
+try:
+    from .Configuration import run_rhythme
+except ImportError:
+    from Configuration import run_rhythme
 __author__ = "justinhyon"
 __copyright__ = "justinhyon"
 __license__ = "MIT"
@@ -41,21 +43,21 @@ _logger = logging.getLogger(__name__)
 # when using this Python module as a library.
 
 
-def fib(n):
-    """Fibonacci example function
-
-    Args:
-      n (int): integer
-
-    Returns:
-      int: n-th Fibonacci number
-    """
-    assert n > 0
-    a, b = 1, 1
-    for _i in range(n - 1):
-        a, b = b, a + b
-    return a
-
+# def fib(n):
+#     """Fibonacci example function
+#
+#     Args:
+#       n (int): integer
+#
+#     Returns:
+#       int: n-th Fibonacci number
+#     """
+#     assert n > 0
+#     a, b = 1, 1
+#     for _i in range(n - 1):
+#         a, b = b, a + b
+#     return a
+#
 
 # ---- CLI ----
 # The functions defined in this section are wrappers around the main Python

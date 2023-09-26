@@ -5,11 +5,18 @@ Created on Wed Jul  8 10:53:52 2020
 
 @author: justin hyon, jessica ye
 """
-from .psd import psd, psd_plot, psd_idx_plot
-from .plv import plv, plv_plot, plv_idx_plot
-from .ERP import ERP, ERP_plot, ERP_idx_plot
-from .teamflow import calculate_tmflow, teamflow_plot
-
+try:
+    from .psd import psd, psd_plot, psd_idx_plot
+    from .plv import plv, plv_plot, plv_idx_plot
+    from .ERP import ERP, ERP_plot, ERP_idx_plot
+    from .teamflow import calculate_tmflow, teamflow_plot
+    from .custom_function import custom_function, custom_plot_1, custom_plot_2
+except ImportError:
+    from psd import psd, psd_plot, psd_idx_plot
+    from plv import plv, plv_plot, plv_idx_plot
+    from ERP import ERP, ERP_plot, ERP_idx_plot
+    from teamflow import calculate_tmflow, teamflow_plot
+    from custom_function import custom_function, custom_plot_1, custom_plot_2
 import sys
 import struct
 from mne_realtime.externals import FieldTrip
@@ -257,15 +264,21 @@ class RHYTHME:
 
                 participant_raws = []
                 for i, participant in enumerate(participant_data):
-                    # print(channelnames)
-                    print("part")
-                    # print(participant)
-                    raw = self.make_raw(participant, stimvals, fsample, units, channelnames[i])
-                    raw = self.preprocess_raw(raw, badchans[i])
-                    participant_raws.append(raw)
-                    print('Sub Data shape (nChannels, nSamples): {0} for participant {1}'.format(participant.shape,
-                                                                                                 i + 1))
-                    del raw  # Delete raw variable so it does not interfere with next loop
+                    if i < numparticipants:
+                        # print(channelnames)
+                        print(i)
+                        # print(participant)
+                        try:
+                            raw = self.make_raw(participant, stimvals, fsample, units, channelnames[i])
+                        except IndexError:
+                            print("FATAL: fewer channel names lists than number of participants. Check channelnames, "
+                                  "numparticipants, nchansparticipant")
+                            exit(1)
+                        raw = self.preprocess_raw(raw, badchans[i])
+                        participant_raws.append(raw)
+                        print('Sub Data shape (nChannels, nSamples): {0} for participant {1}'.format(participant.shape,
+                                                                                                     i + 1))
+                        del raw  # Delete raw variable so it does not interfere with next loop
 
                 # Change channel names so that we can now append the two subjects together
                 for i, participantraw in enumerate(participant_raws):
@@ -528,8 +541,59 @@ class RHYTHME:
                 print("\n", "4-" * 60)
 
                 ############################################################################
-                ###############Make Datastructure to make plotting easier###################
+                ###############custom function###################
+                time1 = timer()
+                for subject, keyname in enumerate([i for i in list(function_dict.keys()) if 'custom' in i]):
+                    print(list(function_dict.keys()))
+                    print([i for i in list(function_dict.keys()) if 'custom' in i])
 
+                    # psdnames=['band1', 'band2']  #placeholder, remove
+                    r = str(subject)
+                    # i = np.mod(idx, len(
+                    #     foilows))  # Adjust for the fact that channels are different amongst subjects, but fois are the same
+                    function_dict = custom_function(raw,
+                                                    r,
+                                                  function_dict,
+                                                  fsample)
+                    if self.plotpref != 'none':
+
+                        plot_settings = self.plot_settings(function_dict[keyname]['custom_plot_1'],
+                                                           ex_plot_matrix, sub_plot_matrix)
+                        if plot_settings:
+                            print('PLOTSETTINGS', plot_settings)
+                            whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                            ax[whichax] = custom_plot_1(ax[whichax], loc, subject + 1,
+                                                   function_dict)
+
+                        plot_settings = self.plot_settings(function_dict[keyname]['custom_plot_2'],
+                                                           ex_plot_matrix, sub_plot_matrix)
+                        if plot_settings:
+                            whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                            ax[whichax] = custom_plot_1(ax[whichax], n + 1, loc, subject + 1,
+                                                        function_dict)
+                    # if self.plotpref == 'both' or self.plotpref == 'experiment':
+                    #     band = n + 1
+                    #     if band % 2 == 0:
+                    #         col = 2
+                    #     else:
+                    #         col = 0
+                    #
+                    #     if idx < 2:
+                    #         row = 2
+                    #     elif 2 <= idx <= 3:
+                    #         row = 3
+                    #     else:
+                    #         print('too many PSD bands, band {} not plotted'.format(band))
+                    #
+                    #     ax[0] = psd_plot(ax[0], this_psd_spec, psds, this_freqs, band, row, col,
+                    #                   function_dict[keyname]['foilow_band' + r],
+                    #                   function_dict[keyname]['foihigh_band' + r])
+
+                    function_dict[keyname]['values_band' + r] = psds
+
+                time2 = timer()
+                print("Time to compute 6 PSDs: {}".format(time2 - time1))
+                print("\n", "2-" * 60)
                 # intra1_tm, intra2_tm, inter_tm = calculate_tmflow(data_dict=function_dict)
                 #
                 # function_dict['flow']['values_Intra 1'] = (intra1_tm)
@@ -542,7 +606,7 @@ class RHYTHME:
                 #             valuecopy = value
                 #             valuecopy[0] = 0.0
                 #             function_dict['flow'][key] = valuecopy
-                print(function_dict.values())
+                # print(function_dict.values())
 
                 ############################################################################
                 if self.plotpref == 'both' or self.plotpref == 'participant':
