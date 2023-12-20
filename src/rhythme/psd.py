@@ -17,7 +17,7 @@ def psd(raw, psd_list, chan, foilow, foihigh, fSamp):
     #                                     area_mode='std', average=True)
 
     data = raw._data
-    print(chan)
+    # print(chan)
     data = data[chan, :]
     # print("chan: ", chan)
     # data = data * 1000000
@@ -28,15 +28,16 @@ def psd(raw, psd_list, chan, foilow, foihigh, fSamp):
                     noverlap=0, nfft=fSamp, detrend=False)
     # f, pxx1 = welch(data, fs=fSamp, window='hamming', noverlap=0, detrend=False)
     # print(f)
-
+    # print(pxx1)
     psd = np.transpose(pxx1)
+
     psd_db = np.multiply(10, np.log10(psd))
     # print(psd_db.shape)
     freqs = range(foilow, foihigh, 1)
     sub_psd_db = psd_db[freqs, :]
-
+    # print(sub_psd_db)
     psd_list.append(np.mean(np.mean(sub_psd_db, axis=-1), axis=-1))
-    print('TEST', psd_list)
+    # print('TEST', psd_list)
     plot_psd = psd_db.transpose().mean(axis=0)
     return psd_list, plot_psd, f
 

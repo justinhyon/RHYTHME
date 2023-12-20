@@ -8,6 +8,7 @@
 VERSION 1.0.0
 """
 import numpy as np
+
 try:
     from .Client import RHYTHME
 except ImportError:
@@ -17,23 +18,27 @@ import toml
 import argparse
 import sys
 
+
 # parser = argparse.ArgumentParser()
 # parser.add_argument("--cf", help="Enter the path to the configuration toml file", required=True)
 # args = parser.parse_args()
 
-def run_rhythme(path):
-    with open(str(path)) as fileObj:
+def run_rhythme(config_filepath, offline_filepath=None):
+    # print('1')
+    with open(str(config_filepath)) as fileObj:
         content = fileObj.read()
         all_config = toml.loads(content)
+
     # print(str(path))
     # insert path to directory where JH_offline_client.py is located
     # path = '/Users/justinhyon/Documents/GitHub/teamflow/src'
     # sys.path.insert(1, path)
-
+    # print("all_config", all_config)
     # general configurations
     general_config = all_config['general_config']
     option = general_config['option']
     savepath = general_config['savepath']
+    print_output = general_config['print_output']
 
     blocksize_sec = general_config['blocksize_sec']  # number of seconds per segment
     units = general_config['units']  # v for volts, mv for millivolts, uv for microvolts, Mv for megavolts
@@ -60,7 +65,8 @@ def run_rhythme(path):
 
     # channel configurations
     badchans = general_config['badchans']
-    TrigChan = general_config['TrigChan']  # python begins numbering from 0, so this is the channel number of the stim channel - 1 (not the name)
+    TrigChan = general_config[
+        'TrigChan']  # python begins numbering from 0, so this is the channel number of the stim channel - 1 (not the name)
     # can be 'none' if there is no trigger channel, and a trigger channel of all 0s will be added to the end of the data
     # use option 'create' if events are being sent from FieldTrip Buffer, but there is no Trigger Channel in the data (ie.
     # realtime mode). This will create a stim channel with the events, and adds it as the last channel.
@@ -68,19 +74,26 @@ def run_rhythme(path):
     channelnames = all_config['channelnames_dict']['channelnames']
 
     # configurations for realtime mode (ignored in offline mode)
-    start_zero = general_config['start_zero']  # whether the experiment must start from the first sample (empty buffer), or False for the current
+    start_zero = general_config[
+        'start_zero']  # whether the experiment must start from the first sample (empty buffer), or False for the current
     #  sample in the buffer
     exp_name = general_config['exp_name']
-    dataport = general_config['dataport'] # use 3113 for eeg machine
+    dataport = general_config['dataport']  # use 3113 for eeg machine
     ignore_overflow = general_config['ignore_overflow']  # throw out samples past the desired block size
-    n_skipped_segs = general_config['n_skipped_segs'] # max number of segments to skip in between 2 processed segments due
+    n_skipped_segs = general_config[
+        'n_skipped_segs']  # max number of segments to skip in between 2 processed segments due
     # to runtime
-    wait_segs = general_config['wait_segs']  # How many segments worth of time (blocksize_sec) to wait for new data before quitting the pipeline. does
+    wait_segs = general_config[
+        'wait_segs']  # How many segments worth of time (blocksize_sec) to wait for new data before quitting the pipeline. does
     # not apply to the initial wait for first segment to arrive
     delay = general_config['delay']  # how long to wait before checking again for new samples in the buffer
 
     # configurations for offline mode (ignored in realtime mode)
-    filepath = general_config['filepath']  # path to the  bdf data file
+    if offline_filepath:
+        filepath = offline_filepath
+
+    else:
+        filepath = general_config['filepath']  # path to the  bdf data file
     fsample = general_config['fsample']  # samples per second
 
     function_dict = all_config['function_dict']
@@ -447,8 +460,9 @@ def run_rhythme(path):
     # #         }
     # #
 
-
     # if __name__ == '__main__':
+    # if not print_output:
+    #     sys.stdout = open(os.devnull, 'w')
     TF = RHYTHME(savepath, dataport, ex_windowsize, sub_windowsize, delay, plotpref, saving, TrigChan, )
 
     TF.master_control(filepath=filepath,
@@ -473,3 +487,4 @@ def run_rhythme(path):
                       channelnames=channelnames,
                       start_zero=start_zero,
                       resample_freq=resample_freq),
+    sys.stdout = sys.__stdout__

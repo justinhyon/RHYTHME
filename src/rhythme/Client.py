@@ -71,10 +71,10 @@ class RHYTHME:
         self.option = option
 
         if self.option == 'offline':
-            self.offline_process(filepath, badchans, fsample, nchansparticipant, trigchan, featurenames, channelofints,
-                                 foilows, foihighs, blocksize_sec, num_plvsimevents, ERP_data, units, remfirstsample,
-                                 function_dict, numparticipants, ex_plot_matrix,
-                                 sub_plot_matrix)
+            self.offline_process(filepath, badchans, fsample, nchansparticipant, trigchan, blocksize_sec,
+                                 num_plvsimevents, units, remfirstsample,
+                                 function_dict, numparticipants, channelnames, ex_plot_matrix,
+                                 sub_plot_matrix, resample_freq)
         elif self.option == "realtime":
             self.realtime_process(delay, badchans, nchansparticipant, trigchan, blocksize_sec, num_plvsimevents, units,
                                   remfirstsample,
@@ -159,16 +159,16 @@ class RHYTHME:
                     print("normal")
                     initial_wait = False
                     break
-                elif (currentsamp - 1 - prevsamp) <= (blocksize * (n_skipped_segs + 1)) and \
-                        (H.nSamples - prevsamp) / blocksize in range(1, n_skipped_segs + 2):
-                    print('\nCAUTION: SEGMENT SKIPPED')
-                    prevsamp = prevsamp + blocksize
-                    break
                 elif H.nSamples > prevsamp + blocksize and ignore_overflow:
                     initial_wait = False
 
                     currentsamp = prevsamp + blocksize
                     print("Skipped Data: ", (H.nSamples - currentsamp))
+                    break
+                elif (currentsamp - 1 - prevsamp) <= (blocksize * (n_skipped_segs + 1)) and \
+                        (H.nSamples - prevsamp) / blocksize in range(1, n_skipped_segs + 2):
+                    print('\nCAUTION: SEGMENT SKIPPED')
+                    prevsamp = prevsamp + blocksize
                     break
                 else:
                     time.sleep(delay)
@@ -217,9 +217,9 @@ class RHYTHME:
                 #     print(this_ev.sample)
                 # print("Last Event: ", ev_last)
 
-                if trigchan == 'create':
-
-                    gen_stim_channel = self.create_stim_channel(ev, prevsamp, currentsamp)
+                # if trigchan == 'create':
+                #
+                #     gen_stim_channel = self.create_stim_channel(ev, prevsamp, currentsamp)
 
                 prevsamp = currentsamp
 
@@ -245,7 +245,7 @@ class RHYTHME:
                     self.stim_idx = str(len(segmentdata))
                     segmentdata = segmentdata.copy()
                 elif trigchan == 'create':
-                    stimvals = gen_stim_channel
+                    stimvals = self.create_stim_channel(ev, prevsamp, currentsamp)
                     np.append(segmentdata, stimvals)
                     self.stim_idx = str(len(segmentdata))
                     segmentdata = segmentdata.copy()
@@ -647,9 +647,9 @@ class RHYTHME:
                 self.save_csv(function_dict, exp_name)
                 break
 
-    def offline_process(self, filepath, badchans, fsample, nchansparticipant, trigchan, featurenames, channelofints,
-                        foilows, foihighs, blocksize_sec, num_plvsimevents, ERP_data, units, remfirstsample,
-                        function_dict, numparticipants, ex_plot_matrix, sub_plot_matrix):
+    def offline_process(self, filepath, badchans, fsample, nchansparticipant, trigchan, blocksize_sec,
+                        num_plvsimevents, units, remfirstsample,
+                        function_dict, numparticipants, channelnames, ex_plot_matrix, sub_plot_matrix, resample_freq):
 
         '''
         numparticipants         number of participants
@@ -659,6 +659,14 @@ class RHYTHME:
         foihighs                list
         ERP_data                list of lists [[participant 1 info], [participant 2 info],...]
         '''
+        for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'ERP' in i]):
+            # function_dict[keyname]['values_ERP'] = []
+            function_dict[keyname]['exB_ERPlist'] = []
+            function_dict[keyname]['exE_ERPlist'] = []
+            function_dict[keyname]['ERPxvallist'] = []
+        if self.plotpref != 'none':
+            fig, ax = self.setup_plotting(ex_plot_matrix, sub_plot_matrix)
+
 
         if filepath.endswith('.bdf'):
             fullraw = read_raw_bdf(filepath, preload=True)
@@ -666,8 +674,15 @@ class RHYTHME:
             fullraw = read_raw_eeglab(filepath, preload=True)
 
         fulldata = fullraw._data
+        if type(trigchan) == int:
+            fulldatanostim = np.delete(fulldata, int(trigchan), axis=0)
+        elif trigchan == 'none':
+            fulldatanostim = fulldata
+        else:
+            print('For offline analysis, TrigChan must be either an integer representing a channel, or a '
+                  'string "none"')
+            exit(1)
 
-        fulldatanostim = np.delete(fulldata, int(trigchan), axis=0)
         blocksize = round(blocksize_sec * fsample)
         self.filepath = filepath
         prevsamp = 0
@@ -675,30 +690,30 @@ class RHYTHME:
         print("Total Samples Loaded = {}".format(fulldata.shape))
 
         # Initiate list of lists to store psd values for one participant
-        psds = [[] for i in range(len(channelofints))]
-        plv_intra1 = []
-        plv_inter = []
-        plv_intra2 = []
-
-        values_ERP = [[] for i in range(len(ERP_data))]
-        exB_ERPlist = [[] for i in range(len(ERP_data))]
-        exE_ERPlist = [[] for i in range(len(ERP_data))]
-        ERPxvallist = [[] for i in range(len(ERP_data))]
+        # psds = [[] for i in range(len(channelofints))]
+        # plv_intra1 = []
+        # plv_inter = []
+        # plv_intra2 = []
+        #
+        # values_ERP = [[] for i in range(len(ERP_data))]
+        # exB_ERPlist = [[] for i in range(len(ERP_data))]
+        # exE_ERPlist = [[] for i in range(len(ERP_data))]
+        # ERPxvallist = [[] for i in range(len(ERP_data))]
         # intra1_tm = []
         # intra2_tm = []
         # inter_tm = []
 
-        data_dict = OrderedDict()
-        data_dict['Intra 1'] = []
-        data_dict['Intra 2'] = []
-        data_dict['Inter'] = []
+        # data_dict = OrderedDict()
+        # data_dict['Intra 1'] = []
+        # data_dict['Intra 2'] = []
+        # data_dict['Inter'] = []
 
         # For plotting
-        if self.plotpref != 'none':
-            if self.plotpref == 'participant' or self.plotpref == 'both':
-                # plt.close(self.fig)
-                fig, ax = plt.subplots(1, 3, squeeze=False,
-                                       figsize=(self.windowsize * 3, self.windowsize))
+        # if self.plotpref != 'none':
+        #     if self.plotpref == 'participant' or self.plotpref == 'both':
+        #         # plt.close(self.fig)
+        #         fig, ax = plt.subplots(1, 3, squeeze=False,
+        #                                figsize=(self.windowsize * 3, self.windowsize))
 
         while True:
             # time.sleep(self.delay)
@@ -710,29 +725,72 @@ class RHYTHME:
                 print('\nProcessing data from segment: ' + str(self.segment))
                 print("Trying to read from sample {0} to {1}. Samples per block: {2}".format(prevsamp, currentsamp,
                                                                                              blocksize))
-                participant_data = []
-                idx = 0
-                while idx < fulldatanostim.shape[0]:
-                    participant_data.append(fulldatanostim[int(idx):idx + nchansparticipant, prevsamp:currentsamp])
-                    idx += nchansparticipant
 
+                segmentdata = fulldata[:, prevsamp:currentsamp]
                 # D1 = fulldata[0:128, prevsamp:currentsamp]
                 # D2 = fulldata[128:256, prevsamp:currentsamp]
-                stimvals = fulldata[int(trigchan), prevsamp:currentsamp] * 1000000
+                if type(trigchan) == int:
+                    stim = segmentdata[int(trigchan), :]
+                    minval = np.amin(stim)
+                    if minval != 0:
+                        stimvals = stim - minval  # correct values of the stim channel (stim is always last channel)
+                    else:
+                        stimvals = stim
 
+                    segmentdata = np.delete(segmentdata, int(trigchan), axis=0)
+                    self.stim_idx = str(self.TrigChan)
+
+                    if any(stimvals):
+                        stimvals = stimvals * 1000000
+                        # if units == "mv":
+                        #     stimvals = stimvals * 1000
+                        # elif units == "uv":
+                        #     stimvals = stimvals * 1000000
+                        # elif units == "Mv":
+                        #     stimvals = stimvals / 1000
+                        # elif units != "v":
+                        #     print("invalid units selected")
+                        #     sys.exit(1)
+                    for i in stimvals:
+                        if i!=0:
+                            print('event ', i)
+                elif trigchan == 'none':
+                    stimvals = np.zeros(segmentdata.shape[1])
+                    # trigchan = nchansparticipant * numparticipants
+                    # print(segmentdata.shape)
+                    np.append(segmentdata, stimvals)
+                    self.stim_idx = str(len(segmentdata))
+                    segmentdata = segmentdata.copy()
+                else:
+                    "INVALID OPTION FOR TrigChan"
+                    exit(1)
+                print('Data shape (nChannels, nSamples): {}'.format(segmentdata.shape))
+                participant_data = []
+                idx = 0
+                while idx < segmentdata.shape[0]:
+                    participant_data.append(segmentdata[int(idx):idx + nchansparticipant, :])
+                    idx += nchansparticipant
                 prevsamp = currentsamp
                 # print(D)
                 print('Samples loaded for segment: ' + str(self.segment))
 
                 participant_raws = []
                 for i, participant in enumerate(participant_data):
-                    raw = self.make_raw(participant, stimvals, fsample, units)
-                    raw = self.preprocess_raw(raw, badchans[i])
-                    participant_raws.append(raw)
-                    print('Sub Data shape (nChannels, nSamples): {0} for participant {1}'.format(participant.shape,
-                                                                                                 i + 1))
-                    print("raw after preprocessing", raw.get_data())
-                    del raw  # Delete raw variable so it does not interfere with next loop
+                    if i < numparticipants:
+                        # print(channelnames)
+                        print(i)
+                        # print(participant)
+                        try:
+                            raw = self.make_raw(participant, stimvals, fsample, units, channelnames[i])
+                        except IndexError:
+                            print("FATAL: fewer channel names lists than number of participants. Check channelnames, "
+                                  "numparticipants, nchansparticipant")
+                            exit(1)
+                        raw = self.preprocess_raw(raw, badchans[i])
+                        participant_raws.append(raw)
+                        print('Sub Data shape (nChannels, nSamples): {0} for participant {1}'.format(participant.shape,
+                                                                                                     i + 1))
+                        del raw  # Delete raw variable so it does not interfere with next loop
 
                 # Change channel names so that we can now append the two subjects together
                 for i, participant in enumerate(participant_raws):
@@ -754,21 +812,78 @@ class RHYTHME:
                 raw_stim = RawArray(np.asarray(stimvals).reshape(1, len(stimvals)), info_stim)
                 raw = raw.add_channels([raw_stim], force_update_info=True)
 
+                if fsample != resample_freq:
+                    raw = raw.resample(resample_freq)
+                    print("RESAMPLED DATA SHAPE", raw.get_data().shape)
+
+                    fsample = resample_freq
+                    blocksize_res= round(blocksize_sec * fsample)
+                    stimvals = raw.get_data()[int(self.stim_idx)]
+                else:
+                    blocksize_res = blocksize
                 time2 = timer()
                 print("Time to preprocess data and create MNE raw: {}".format(time2 - time1))
                 # print("\n", "1-" * 60)
+
                 self.stim_idx = self.TrigChan
                 self.stim_values = stimvals
-                print('STIM CHANNEL: ', self.stim_idx, self.stim_values)
+                # print('STIM CHANNEL: ', self.stim_idx, self.stim_values)
 
                 # Extract features
                 ################## PSDs #################################################
                 time1 = timer()
 
-                for idx, chans in enumerate(channelofints):
-                    i = np.mod(idx, len(
-                        foilows))  # Adjust for the fact that channels are different amongst subjects, but fois are the same
-                    psds[idx] = psd(raw, psds[idx], chans, foilows[i], foihighs[i], fsample)
+                for subject, keyname in enumerate([i for i in list(function_dict.keys()) if 'psd' in i]):
+                    for n, psdkey in enumerate([j for j in list(function_dict[keyname].keys()) if 'values' in j]):
+                        # print(psdkey)
+
+                        # psdnames=['band1', 'band2']  #placeholder, remove
+                        r = str(n + 1)
+                        # i = np.mod(idx, len(
+                        #     foilows))  # Adjust for the fact that channels are different amongst subjects, but fois are the same
+                        psds, this_psd_spec, this_freqs = psd(raw,
+                                                              function_dict[keyname]['values_band' + r],
+                                                              function_dict[keyname]['channelofint_band' + r],
+                                                              function_dict[keyname]['foilow_band' + r],
+                                                              function_dict[keyname]['foihigh_band' + r],
+                                                              fsample)
+                        if self.plotpref != 'none':
+
+                            plot_settings = self.plot_settings(function_dict[keyname]['plotwv_band' + r],
+                                                               ex_plot_matrix, sub_plot_matrix)
+                            if plot_settings:
+                                print('PLOTSETTINGS', plot_settings)
+                                whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                                ax[whichax] = psd_plot(ax[whichax], this_psd_spec, psds, this_freqs, n + 1, loc,
+                                                       function_dict[keyname]['foilow_band' + r],
+                                                       function_dict[keyname]['foihigh_band' + r],
+                                                       subject + 1)
+
+                            plot_settings = self.plot_settings(function_dict[keyname]['plotidx_band' + r],
+                                                               ex_plot_matrix,
+                                                               sub_plot_matrix)
+                            if plot_settings:
+                                whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                                ax[whichax] = psd_idx_plot(ax[whichax], psds, n + 1, loc, subject + 1)
+                        # if self.plotpref == 'both' or self.plotpref == 'experiment':
+                        #     band = n + 1
+                        #     if band % 2 == 0:
+                        #         col = 2
+                        #     else:
+                        #         col = 0
+                        #
+                        #     if idx < 2:
+                        #         row = 2
+                        #     elif 2 <= idx <= 3:
+                        #         row = 3
+                        #     else:
+                        #         print('too many PSD bands, band {} not plotted'.format(band))
+                        #
+                        #     ax[0] = psd_plot(ax[0], this_psd_spec, psds, this_freqs, band, row, col,
+                        #                   function_dict[keyname]['foilow_band' + r],
+                        #                   function_dict[keyname]['foihigh_band' + r])
+
+                        function_dict[keyname]['values_band' + r] = psds
 
                 time2 = timer()
                 print("Time to compute 6 PSDs: {}".format(time2 - time1))
@@ -779,20 +894,58 @@ class RHYTHME:
                 ########################### values_ERP ##########################################
                 time1 = timer()
 
-                for idx, participant in enumerate(ERP_data):
-                    channelofint = participant[0]
-                    epoeventval = participant[1]
-                    pretrig = participant[2]
-                    posttrig = participant[3]
-                    values_ERP[idx], exB_ERPlist[idx], exE_ERPlist[idx], ERPxvallist[idx], = ERP(raw, values_ERP[idx],
-                                                                                           exB_ERPlist[idx],
-                                                                                           exE_ERPlist[idx],
-                                                                                           ERPxvallist[idx], fsample,
-                                                                                           blocksize, channelofint,
-                                                                                           epoeventval, pretrig,
-                                                                                           posttrig, stimvals,
-                                                                                           self.segment)
-                    print(values_ERP[idx])
+                for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'ERP' in i]):
+
+                    values_ERP, ERPxvallist, exB_ERPlist, exE_ERPlist, segmentERPdata = \
+                        ERP(raw=raw,
+                            ERPlist=function_dict[keyname]['values_ERP'],
+                            exB_ERPlist=function_dict[keyname]['exB_ERPlist'],
+                            exE_ERPlist=function_dict[keyname]['exE_ERPlist'],
+                            ERPxvallist=function_dict[keyname]['ERPxvallist'],
+                            fsample=fsample,
+                            blocksize=blocksize_res,
+                            channelofint=function_dict[keyname]['channelofint'],
+                            epoeventval=function_dict[keyname]['epoeventval'],
+                            pretrig=function_dict[keyname]['pretrig'],
+                            posttrig=function_dict[keyname]['posttrig'],
+                            stim_values=stimvals,
+                            segment=self.segment,
+                            bands=function_dict[keyname]['bands'],
+                            signs=function_dict[keyname]['signs'])
+
+                    if self.plotpref != 'none':
+                        plot_settings = self.plot_settings(function_dict[keyname]['plotwv'], ex_plot_matrix,
+                                                           sub_plot_matrix)
+                        if plot_settings:
+                            # print('PLOTSETTINGS', plot_settings)
+                            whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                            ax[whichax] = ERP_plot(ax=ax[whichax], data=segmentERPdata,
+                                                   participant=int(keyname[-1]) - 1,
+                                                   fsample=fsample,
+                                                   ERPlist=function_dict[keyname]['values_ERP'],
+                                                   segment=self.segment,
+                                                   pretrig=function_dict[keyname]['pretrig'],
+                                                   posttrig=function_dict[keyname]['posttrig'],
+                                                   location=loc,
+                                                   bands=function_dict[keyname]['bands']
+                                                   )
+                        plot_settings = self.plot_settings(function_dict[keyname]['plotidx'], ex_plot_matrix,
+                                                           sub_plot_matrix)
+                        if plot_settings:
+                            whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                            ax[whichax] = ERP_idx_plot(ax=ax[whichax],
+                                                       participant=int(keyname[-1]) - 1,
+                                                       ERPlist=values_ERP,
+                                                       ERPxvallist=ERPxvallist, exB_ERPlist=exB_ERPlist,
+                                                       exE_ERPlist=exE_ERPlist,
+                                                       segment=self.segment, location=loc
+                                                       )
+
+                    function_dict[keyname]['values_ERP'] = values_ERP
+                    function_dict[keyname]['ERPxvallist'] = ERPxvallist
+                    function_dict[keyname]['exB_ERPlist'] = exB_ERPlist
+                    function_dict[keyname]['exE_ERPlist'] = exE_ERPlist
+
                 time2 = timer()
                 print("Time to compute 2 values_ERP: {}".format(time2 - time1))
                 print("\n", "3-" * 60)
@@ -801,10 +954,82 @@ class RHYTHME:
                 time1 = timer()
 
                 # numblocks = 10
-                intra1, inter, intra2 = plv(raw, self.segment, blocksize, fsample, num_plvsimevents)
-                plv_intra1.append(intra1)
-                plv_inter.append(inter)
-                plv_intra2.append(intra2)
+                for n, keyname in enumerate([i for i in list(function_dict.keys()) if 'plv' in i]):
+                    intrameans, intermean, con = plv(raw, self.segment, blocksize_res, fsample, num_plvsimevents,
+                                                     numparticipants,
+                                                     nchansparticipant)
+                    # plv_intra1.append(intra1)
+                    # plv_inter.append(inter)
+                    # plv_intra2.append(intra2)
+                    for i, intramean in enumerate(intrameans):
+                        function_dict[keyname]['values_intra' + str(i + 1)] += [intramean]
+                    # function_dict[keyname]['values_intra2'] += [intra2]
+                    function_dict[keyname]['values_inter'] += [intermean]
+
+                    # if self.plotpref == 'both' or self.plotpref == 'experiment':
+                    #     ax[0] = plv_plot(ax[0], con, plv_intra1, plv_inter, plv_intra2)
+
+                    if self.plotpref != 'none':
+
+                        plot_settings = self.plot_settings(function_dict[keyname]['plot_matrix'], ex_plot_matrix,
+                                                           sub_plot_matrix)
+
+                        if plot_settings:
+                            # print('PLOTSETTINGS', plot_settings)
+                            whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                            ax[whichax] = plv_plot(ax[whichax], con, loc, numparticipants, nchansparticipant)
+
+                        if type(function_dict[keyname]['plot_option']) == tuple:
+                            for r, indexkeyname in enumerate(
+                                    [i for i in list(function_dict[keyname].keys()) if 'index' in i]):
+                                # if numparticipants != 2:
+                                #     if n > 1:
+                                #         break
+                                if r in function_dict[keyname]['plot_option'] or r == 0:
+                                    plot_settings = self.plot_settings(function_dict[keyname][indexkeyname],
+                                                                       ex_plot_matrix,
+                                                                       sub_plot_matrix)
+
+                                    if plot_settings:
+                                        nameslice = indexkeyname[indexkeyname.index('_') + 1:]
+                                        # print('PLOTSETTINGS', plot_settings)
+                                        whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+
+                                        ax[whichax] = plv_idx_plot(ax[whichax],
+                                                                   function_dict[keyname]['values_' + nameslice], loc,
+                                                                   nameslice)
+                        elif type(function_dict[keyname]['plot_option']) == str:
+                            allmean = []
+                            for i, intramean in enumerate(intrameans):
+                                allmean.append(function_dict[keyname]['values_intra' + str(i + 1)])
+                            allmean = zip(*allmean)
+                            allmean = list(allmean)
+                            # print(1, allmean)
+                            for i, vals in enumerate(allmean):
+                                # print(2, list(vals))
+                                allmean[i] = np.mean(list(vals))
+                            # print(3,allmean)
+                            plot_settings = self.plot_settings(function_dict[keyname]['plot_option'], ex_plot_matrix,
+                                                               sub_plot_matrix)
+
+                            if plot_settings:
+                                # nameslice = keyname[keyname.index('_') + 1:]
+                                # print('PLOTSETTINGS', plot_settings)
+                                whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                                name = 'Intrabrain PLV mean index'
+                                ax[whichax] = plv_idx_plot(ax[whichax], allmean,
+                                                           loc, name)
+
+                            plot_settings = self.plot_settings(function_dict[keyname]['index_inter'], ex_plot_matrix,
+                                                               sub_plot_matrix)
+
+                            if plot_settings:
+                                # nameslice = keyname[keyname.index('_') + 1:]
+                                # print('PLOTSETTINGS', plot_settings)
+                                whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                                name = 'Interbrain PLV mean index'
+                                ax[whichax] = plv_idx_plot(ax[whichax], function_dict[keyname]['values_inter'],
+                                                           loc, name)
 
                 time2 = timer()
                 print("Time to compute PLV: {}".format(time2 - time1))
@@ -814,66 +1039,66 @@ class RHYTHME:
 
                 ###############Make Datastructure to make plotting easier###################
                 # values_ERP
-                for idx, participant in enumerate(values_ERP):
-                    name = 'ERP ' + str(idx + 1)
-                    data_dict[name] = participant
-                    # namenorm = 'ERP ' + str(idx + 1) + ' norm'
-                    # data_dict[namenorm] = self.moving_average(participant, norm=True, rmzero=False)
-
-                # PSDs, band names are passed from config fil2e
-                for idx, name in enumerate(featurenames):
-                    data_dict[name] = psds[idx]
-
-                data_dict['PLV 1'] = plv_intra1
-                data_dict['PLV 2'] = plv_intra2
-                data_dict['PLV inter'] = plv_inter
-
-                intra1_tm, intra2_tm, inter_tm = self.calculate_tmflow(data_dict)
-
-                data_dict['Intra 1'] = (intra1_tm)
-                data_dict['Intra 2'] = (intra2_tm)
-                data_dict['Inter'] = (inter_tm)
-
-                print(data_dict.values())
-                if (self.segment == 2) & remfirstsample:
-                    for key, value in data_dict.items():
-                        if key in ['Intra 1', 'Intra 2', 'Inter']:
-                            print("yote")
-                            valuecopy = value
-                            valuecopy[0] = 0.0
-                            print(value)
-                            print(valuecopy)
-                            data_dict[key] = valuecopy
-                print(data_dict.values())
-                ############################################################################
-
-                if self.plotpref != 'none':
-                    print("\nGenerating Plots...")
-                    time1 = timer()
-                    if self.plotpref == 'participant' or self.plotpref == 'both':
-                        ax[0, 0].cla()
-                        ax[0, 1].cla()
-                        ax[0, 2].cla()
-
-                        x = np.arange(1, len(data_dict['Intra 1']) + 1)
-
-                        ax[0, 0].bar(x, data_dict['Intra 1'], width=0.4, color='red')  # index for flow intra 1
-                        ax[0, 1].bar(x, data_dict['Inter'], width=0.4, color='blue')  # index for plv inter
-                        ax[0, 2].bar(x, data_dict['Intra 2'], width=0.4, color='green')  # index for plv intra 2
-
-                        # ax[0, 0].plot(x, data_dict['Intra 1'], color='red')  # index for flow intra 1
-                        # ax[0, 1].plot(x, data_dict['Inter'], color='blue')  # index for plv inter
-                        # ax[0, 2].plot(x, data_dict['Intra 2'], color='green')  # index for plv intra 2
-
-                        ax[0, 0].set_ylim(0, 10)
-                        ax[0, 1].set_ylim(0, 10)
-                        ax[0, 2].set_ylim(0, 10)
-
-                        ax[0, 0].set(title='Intra 1', xlabel='Segment #', ylabel='Score')
-                        ax[0, 1].set(title='Inter', xlabel='Segment #', ylabel='Score')
-                        ax[0, 2].set(title='Intra 2', xlabel='Segment #', ylabel='Score')
-                        # self.fig.suptitle('Data Segment {}'.format(self.segment), fontsize=16)
-                        plt.pause(0.05)
+                # for idx, participant in enumerate(values_ERP):
+                #     name = 'ERP ' + str(idx + 1)
+                #     data_dict[name] = participant
+                #     # namenorm = 'ERP ' + str(idx + 1) + ' norm'
+                #     # data_dict[namenorm] = self.moving_average(participant, norm=True, rmzero=False)
+                #
+                # # PSDs, band names are passed from config fil2e
+                # for idx, name in enumerate(featurenames):
+                #     data_dict[name] = psds[idx]
+                #
+                # data_dict['PLV 1'] = plv_intra1
+                # data_dict['PLV 2'] = plv_intra2
+                # data_dict['PLV inter'] = plv_inter
+                #
+                # intra1_tm, intra2_tm, inter_tm = self.calculate_tmflow(data_dict)
+                #
+                # data_dict['Intra 1'] = (intra1_tm)
+                # data_dict['Intra 2'] = (intra2_tm)
+                # data_dict['Inter'] = (inter_tm)
+                #
+                # print(data_dict.values())
+                # if (self.segment == 2) & remfirstsample:
+                #     for key, value in data_dict.items():
+                #         if key in ['Intra 1', 'Intra 2', 'Inter']:
+                #             print("yote")
+                #             valuecopy = value
+                #             valuecopy[0] = 0.0
+                #             print(value)
+                #             print(valuecopy)
+                #             data_dict[key] = valuecopy
+                # print(data_dict.values())
+                # ############################################################################
+                #
+                # if self.plotpref != 'none':
+                #     print("\nGenerating Plots...")
+                #     time1 = timer()
+                #     if self.plotpref == 'participant' or self.plotpref == 'both':
+                #         ax[0, 0].cla()
+                #         ax[0, 1].cla()
+                #         ax[0, 2].cla()
+                #
+                #         x = np.arange(1, len(data_dict['Intra 1']) + 1)
+                #
+                #         ax[0, 0].bar(x, data_dict['Intra 1'], width=0.4, color='red')  # index for flow intra 1
+                #         ax[0, 1].bar(x, data_dict['Inter'], width=0.4, color='blue')  # index for plv inter
+                #         ax[0, 2].bar(x, data_dict['Intra 2'], width=0.4, color='green')  # index for plv intra 2
+                #
+                #         # ax[0, 0].plot(x, data_dict['Intra 1'], color='red')  # index for flow intra 1
+                #         # ax[0, 1].plot(x, data_dict['Inter'], color='blue')  # index for plv inter
+                #         # ax[0, 2].plot(x, data_dict['Intra 2'], color='green')  # index for plv intra 2
+                #
+                #         ax[0, 0].set_ylim(0, 10)
+                #         ax[0, 1].set_ylim(0, 10)
+                #         ax[0, 2].set_ylim(0, 10)
+                #
+                #         ax[0, 0].set(title='Intra 1', xlabel='Segment #', ylabel='Score')
+                #         ax[0, 1].set(title='Inter', xlabel='Segment #', ylabel='Score')
+                #         ax[0, 2].set(title='Intra 2', xlabel='Segment #', ylabel='Score')
+                #         # self.fig.suptitle('Data Segment {}'.format(self.segment), fontsize=16)
+                #         plt.pause(0.05)
                         # plt.show()
 
                 # self.final()
@@ -883,10 +1108,91 @@ class RHYTHME:
                 # if self.plotpref != 'none':
                 #     plt.pause(.005)
                 #     plt.draw()
+                ###############custom function###################
+                time1 = timer()
+                for subject, keyname in enumerate([i for i in list(function_dict.keys()) if 'custom' in i]):
+                    print(list(function_dict.keys()))
+                    print([i for i in list(function_dict.keys()) if 'custom' in i])
 
-                if self.saving:
-                    figsavepath = self.savepath + '/TF_figures/TF_plot_' + str(self.segment) + '.jpg'
-                    plt.savefig(figsavepath)
+                    # psdnames=['band1', 'band2']  #placeholder, remove
+                    r = str(subject)
+                    # i = np.mod(idx, len(
+                    #     foilows))  # Adjust for the fact that channels are different amongst subjects, but fois are the same
+                    function_dict = custom_function(raw,
+                                                    r,
+                                                    function_dict,
+                                                    fsample)
+                    if self.plotpref != 'none':
+
+                        plot_settings = self.plot_settings(function_dict[keyname]['custom_plot_1'],
+                                                           ex_plot_matrix, sub_plot_matrix)
+                        if plot_settings:
+                            print('PLOTSETTINGS', plot_settings)
+                            whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                            ax[whichax] = custom_plot_1(ax[whichax], loc, subject + 1,
+                                                        function_dict)
+
+                        plot_settings = self.plot_settings(function_dict[keyname]['custom_plot_2'],
+                                                           ex_plot_matrix, sub_plot_matrix)
+                        if plot_settings:
+                            whichax, loc, ex_plot_matrix, sub_plot_matrix = plot_settings
+                            ax[whichax] = custom_plot_1(ax[whichax], n + 1, loc, subject + 1,
+                                                        function_dict)
+                    # if self.plotpref == 'both' or self.plotpref == 'experiment':
+                    #     band = n + 1
+                    #     if band % 2 == 0:
+                    #         col = 2
+                    #     else:
+                    #         col = 0
+                    #
+                    #     if idx < 2:
+                    #         row = 2
+                    #     elif 2 <= idx <= 3:
+                    #         row = 3
+                    #     else:
+                    #         print('too many PSD bands, band {} not plotted'.format(band))
+                    #
+                    #     ax[0] = psd_plot(ax[0], this_psd_spec, psds, this_freqs, band, row, col,
+                    #                   function_dict[keyname]['foilow_band' + r],
+                    #                   function_dict[keyname]['foihigh_band' + r])
+
+                    function_dict[keyname]['values_band' + r] = psds
+
+                time2 = timer()
+                print("Time to compute 6 PSDs: {}".format(time2 - time1))
+                print("\n", "2-" * 60)
+                # intra1_tm, intra2_tm, inter_tm = calculate_tmflow(data_dict=function_dict)
+                #
+                # function_dict['flow']['values_Intra 1'] = (intra1_tm)
+                # function_dict['flow']['values_Intra 2'] = (intra2_tm)
+                # function_dict['flow']['values_Inter'] = (inter_tm)
+                #
+                # if (self.segment == 2) & remfirstsample:
+                #     for key, value in function_dict['flow'].items():
+                #         if key in ['values_Intra 1', 'values_Intra 2', 'values_Inter']:
+                #             valuecopy = value
+                #             valuecopy[0] = 0.0
+                #             function_dict['flow'][key] = valuecopy
+                # print(function_dict.values())
+
+                ############################################################################
+                if self.plotpref == 'both' or self.plotpref == 'participant':
+                    ax[1] = teamflow_plot(ax[1], function_dict)
+
+                if self.plotpref != 'none':
+
+                    for fi in fig:
+                        if fi is not None:
+                            fi.tight_layout()
+                    plt.pause(0.005)
+                    plt.show()
+
+                if self.saving and self.plotpref != 'none':
+                    for n, fi in enumerate(fig):
+                        if fi is not None:
+                            figsavepath = self.savepath + '/figures/plot_' + str(self.segment) + '_' + str(n) + '.jpg'
+                            fi.savefig(figsavepath)
+
                 time2 = timer()
                 print("Time to generate plots: {}".format(time2 - time1))
                 print("\n", "5-" * 60)
@@ -897,7 +1203,7 @@ class RHYTHME:
 
                 self.segment += 1
             else:
-                self.save_csv(data_dict)
+                self.save_csv(function_dict)
                 break
 
     def setup_plotting(self, ex_plot_matrix, sub_plot_matrix):
@@ -1014,8 +1320,8 @@ class RHYTHME:
         else:
             base = exp_name
 
-        print("SAVING CSV TO " + self.savepath + '/' + base + '_pythonvalidation.csv')
-        df.to_csv(path_or_buf=self.savepath + '/' + base + '_pythonvalidation.csv', index=False)
+        print("SAVING CSV TO " + self.savepath + '/' + base + '_results.csv')
+        df.to_csv(path_or_buf=self.savepath + '/' + base + '_results.csv', index=False)
         print(df)
 
     def make_raw(self, data, stim, fsample, units, channelnames):
@@ -1043,16 +1349,28 @@ class RHYTHME:
         #     stim_values = stim - minval  # correct values of the stim channel (stim is always last channel)
         # else:
         #     stim_values = stim
-        # Adjust units
+
+        # Adjust units to uv
+        # print(D)
         if units == "mv":
             D = D / 1000
         elif units == "uv":
-            D = D / 1000000
+            D = D * 1000000
         elif units == "Mv":
             D = D * 1000
         elif units != "v":
             print("invalid units selected")
             sys.exit(1)
+        # if units == "mv":
+        #     D = D * 1000
+        # elif units == "v":
+        #     D = D * 1000000
+        # elif units == "Mv":
+        #     D = D * 1000
+        # elif units != "v":
+        #     print("invalid units selected")
+        #     sys.exit(1)
+        # print(D)
 
         # D = np.vstack([D, stim_values])
         # self.stim_values = stim_values
