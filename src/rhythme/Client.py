@@ -227,7 +227,11 @@ class RHYTHME:
                 # print(segmentdata)
 
                 if type(trigchan) == int:
-                    stim = segmentdata[int(trigchan), :]
+                    try:
+                        stim = segmentdata[int(trigchan), :]
+                    except IndexError:
+                        print("FATAL: trigger/stimulus channel index > number of channels. Check parameter TrigChan")
+                        exit(1)
                     minval = np.amin(stim)
                     if minval != 0:
                         stimvals = stim - minval  # correct values of the stim channel (stim is always last channel)
@@ -237,7 +241,7 @@ class RHYTHME:
                     segmentdata = np.delete(segmentdata, int(trigchan), axis=0)
                     self.stim_idx = str(self.TrigChan)
                     print(stimvals)
-                elif trigchan == 'none':
+                elif trigchan == 'none' or trigchan == 'na':
                     stimvals = np.zeros(segmentdata.shape[1])
                     # trigchan = nchansparticipant * numparticipants
                     # print(segmentdata.shape)
@@ -1334,6 +1338,10 @@ class RHYTHME:
         # Specify channel types (list with length equal to total number of channels)
         print("\nStarting MNE Operations...")
         channel_types = []
+        # print(channelnames)
+        if type(channelnames) != list:
+            print("FATAL: channel names must be a list within a list, even if there is only 1 participant")
+            exit(1)
         channel_names = channelnames.copy()
         # Assume data is from biosemi 128
         for idx in range(len(channelnames)):
