@@ -4,22 +4,23 @@ savepath = "non-python"
 
 blocksize_sec = 5
 units = "uv"
-fsample = 256
+fsample = 2048
 
 nchansparticipant = 128
 numparticipants = 2
 
 removefirstsample = true
 resample_freq = 256
-start_zero = true
-dataport = 1972
-ignore_overflow = false
+start_zero = false
+dataport = 3113
+ignore_overflow = true
 n_skipped_segs = 1
 wait_segs = 2
 delay = 0.01
+print_output = false
 
 
-plotpref = "none"
+plotpref = "experiment"
 ex_windowsize = [
     24,
     12,
@@ -29,7 +30,7 @@ sub_windowsize = [
     12,
 ]
 ex_plot_dims = [
-    3,
+    4,
     4,
 ]
 sub_plot_dims = [
@@ -44,7 +45,7 @@ badchans = [
     [],
     [],
 ]
-TrigChan = 64
+TrigChan = 'create'
 
 filepath = "/Users/jasonhyon/Desktop/JoinedData/170719_TRIAL2__EM_MD.set"
 
@@ -70,9 +71,9 @@ channelofint = [
     111,
     112,
 ]
-epoeventval = 7
-pretrig = 1
-posttrig = 1
+epoeventval = 3
+pretrig = 0.25
+posttrig = 0.5
 bands = [
     [
         0.11,
@@ -113,8 +114,8 @@ channelofint = [
     239,
     240,
 ]
-epoeventval = 5
-pretrig = 0.3
+epoeventval = 3
+pretrig = 0.25
 posttrig = 0.5
 bands = [
     [
@@ -187,8 +188,8 @@ channelofint_band1 = [
 ]
 foilow_band1 = 30
 foihigh_band1 = 119
-plotwv_band1 = "experiment"
-plotidx_band1 = "experiment"
+plotwv_band1 = 'none'
+plotidx_band1 = 'none'
 values_band2 = []
 channelofint_band2 = [
     32,
@@ -268,45 +269,7 @@ foilow_band3 = 7
 foihigh_band3 = 11
 plotwv_band3 = "experiment"
 plotidx_band3 = "experiment"
-values_band4 = []
-channelofint_band4 = [
-    97,
-    98,
-    99,
-    100,
-    101,
-    102,
-    103,
-    104,
-    105,
-    106,
-    107,
-    108,
-    109,
-    110,
-    111,
-    112,
-    113,
-    114,
-    115,
-    116,
-    117,
-    118,
-    119,
-    120,
-    121,
-    122,
-    123,
-    124,
-    125,
-    126,
-    127,
-    128,
-]
-foilow_band4 = 7
-foihigh_band4 = 11
-plotwv_band4 = "experiment"
-plotidx_band4 = "experiment"
+
 
 [function_dict.psd2]
 values_band1 = []
@@ -346,8 +309,8 @@ channelofint_band1 = [
 ]
 foilow_band1 = 30
 foihigh_band1 = 119
-plotwv_band1 = "experiment"
-plotidx_band1 = "experiment"
+plotwv_band1 = 'none'
+plotidx_band1 = 'none'
 values_band2 = []
 channelofint_band2 = [
     161,
@@ -426,44 +389,8 @@ foilow_band3 = 7
 foihigh_band3 = 11
 plotwv_band3 = "experiment"
 plotidx_band3 = "experiment"
-values_band4 = []
-channelofint_band4 = [
-    225,
-    226,
-    227,
-    228,
-    229,
-    230,
-    231,
-    232,
-    233,
-    234,
-    235,
-    236,
-    237,
-    238,
-    239,
-    240,
-    241,
-    242,
-    243,
-    244,
-    245,
-    246,
-    247,
-    248,
-    249,
-    250,
-    251,
-    252,
-    253,
-    254,
-    255,
-]
-foilow_band4 = 7
-foihigh_band4 = 11
-plotwv_band4 = "experiment"
-plotidx_band4 = "experiment"
+
+
 
 [function_dict.custom1]
 custom_plot_1 = "none"
@@ -735,3 +662,4 @@ channelnames = [
         "D31",
         "D32",
     ],
+]

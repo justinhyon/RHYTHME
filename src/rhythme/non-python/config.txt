@@ -1,0 +1,307 @@
+# comments start with a hash
+; ... or with a semicolon
+; empty lines are fine as well
+
+# Write n=label to select hardware channel number n (starting from 1)
+# and attach a label to it. This will show up in the FieldTrip buffer
+# and the GDF file.
+# Currently, there is no check for double inclusion of channels.
+# That is, if you define 1=FOO and 1=BAR, the first hardware channel
+# will show up twice, with different names.
+# Channels listed before the first [save] or [stream] line will be added
+# to both saving and streaming selections. Write [select] to enable
+# selection for both saving and streaming.
+[select]
+1=A1
+2=A2
+3=A3
+4=A4
+5=A5
+6=A6
+7=A7
+8=A8
+9=A9
+10=A10
+11=A11
+12=A12
+13=A13
+14=A14
+15=A15
+16=A16
+17=A17
+18=A18
+19=A19
+20=A20
+21=A21
+22=A22
+23=A23
+24=A24
+25=A25
+26=A26
+27=A27
+28=A28
+29=A29
+30=A30
+31=A31
+32=A32
+33=B1
+34=B2
+35=B3
+36=B4
+37=B5
+38=B6
+39=B7
+40=B8
+41=B9
+42=B10
+43=B11
+44=B12
+45=B13
+46=B14
+47=B15
+48=B16
+49=B17
+50=B18
+51=B19
+52=B20
+53=B21
+54=B22
+55=B23
+56=B24
+57=B25
+58=B26
+59=B27
+60=B28
+61=B29
+62=B30
+63=B31
+64=B32
+65=C1
+66=C2
+67=C3
+68=C4
+69=C5
+70=C6
+71=C7
+72=C8
+73=C9
+74=C10
+75=C11
+76=C12
+77=C13
+78=C14
+79=C15
+80=C16
+81=C17
+82=C18
+83=C19
+84=C20
+85=C21
+86=C22
+87=C23
+88=C24
+89=C25
+90=C26
+91=C27
+92=C28
+93=C29
+94=C30
+95=C31
+96=C32
+97=D1
+98=D2
+99=D3
+100=D4
+101=D5
+102=D6
+103=D7
+104=D8
+105=D9
+106=D10
+107=D11
+108=D12
+109=D13
+110=D14
+111=D15
+112=D16
+113=D17
+114=D18
+115=D19
+116=D20
+117=D21
+118=D22
+119=D23
+120=D24
+121=D25
+122=D26
+123=D27
+124=D28
+125=D29
+126=D30
+127=D31
+128=D32
+129=A1
+130=A2
+131=A3
+132=A4
+133=A5
+134=A6
+135=A7
+136=A8
+137=A9
+138=A10
+139=A11
+140=A12
+141=A13
+142=A14
+143=A15
+144=A16
+145=A17
+146=A18
+147=A19
+148=A20
+149=A21
+150=A22
+151=A23
+152=A24
+153=A25
+154=A26
+155=A27
+156=A28
+157=A29
+158=A30
+159=A31
+160=A32
+161=B1
+162=B2
+163=B3
+164=B4
+165=B5
+166=B6
+167=B7
+168=B8
+169=B9
+170=B10
+171=B11
+172=B12
+173=B13
+174=B14
+175=B15
+176=B16
+177=B17
+178=B18
+179=B19
+180=B20
+181=B21
+182=B22
+183=B23
+184=B24
+185=B25
+186=B26
+187=B27
+188=B28
+189=B29
+190=B30
+191=B31
+192=B32
+193=C1
+194=C2
+195=C3
+196=C4
+197=C5
+198=C6
+199=C7
+200=C8
+201=C9
+202=C10
+203=C11
+204=C12
+205=C13
+206=C14
+207=C15
+208=C16
+209=C17
+210=C18
+211=C19
+212=C20
+213=C21
+214=C22
+215=C23
+216=C24
+217=C25
+218=C26
+219=C27
+220=C28
+221=C29
+222=C30
+223=C31
+224=C32
+225=D1
+226=D2
+227=D3
+228=D4
+229=D5
+230=D6
+231=D7
+232=D8
+233=D9
+234=D10
+235=D11
+236=D12
+237=D13
+238=D14
+239=D15
+240=D16
+241=D17
+242=D18
+243=D19
+244=D20
+245=D21
+246=D22
+247=D23
+248=D24
+249=D25
+250=D26
+251=D27
+252=D28
+253=D29
+254=D30
+255=D31
+256=D32
+
+
+# Now we add some more channel for saving only
+[save]
+
+
+# And some channels we only want to stream
+[stream]
+
+
+# Please take note that the channels will be written out in the order specified here,
+# that is, they will not be sorted according to the hardware channel number!
+
+# Write "downsample X" with a positive number X to set the downsampling
+# factor for streaming. The GDF file will receive full-rate data.
+downsample 1
+
+# Write "bandwidth X" with a positive real number X to set the cutoff frequency
+# of a Butterworth low-pass filter.
+# bandwidth 50
+
+# Write "bworder N" to set the order of the lowpass Butterworth filter for downsampling
+# bworder 4
+
+# Refresh period (in seconds) for inserting extra events.
+# Battery events are sent out in a fixed interval (set 0 to disable).
+# Status events are sent out when the status changes, OR when the specified
+# time has elapsed after the last event was sent out.
+statusrefresh 4
+batteryrefresh 20
+
+# Triggers will be written as FieldTrip buffer events with type="TRIGGER" and a
+# value corresponding to the 16-bit trigger signal.
+# With the keyword splittrigger, you can opt to split the 16-bit trigger signal
+# into two 8-bit signals, and give names to the events that are sent out for the
+# low and high byte of the original signal, respectively.
+# splittrigger stimulus response

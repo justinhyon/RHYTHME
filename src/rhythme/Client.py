@@ -221,7 +221,7 @@ class RHYTHME:
                 #
                 #     gen_stim_channel = self.create_stim_channel(ev, prevsamp, currentsamp)
 
-                prevsamp = currentsamp
+                
 
                 print('Samples retrieved for segment: ' + str(self.segment))
                 # print(segmentdata)
@@ -257,6 +257,8 @@ class RHYTHME:
                     "INVALID OPTION FOR TrigChan"
                     exit(1)
                 print('Data shape (nChannels, nSamples): {}'.format(segmentdata.shape))
+
+                prevsamp = currentsamp
                 participant_data = []
                 idx = 0
                 while idx < segmentdata.shape[0]:
@@ -299,6 +301,8 @@ class RHYTHME:
                     idx += 1
 
                 # Preprocessing got rid of the stim channel, so now we add the stim channel back in
+                print(stimvals)
+                print(raw._data[-1])
                 info_stim = mne.create_info(['stim'], sfreq=fsample, ch_types=['stim'])
                 raw_stim = RawArray(np.asarray(stimvals).reshape(1, len(stimvals)), info_stim)
                 raw = raw.add_channels([raw_stim], force_update_info=True)
@@ -1459,8 +1463,8 @@ class RHYTHME:
         for n, loc in enumerate(event_locations):
             stim_chan[loc-1] = event_values[n]
 
-        print(stim_chan)
-        return(stim_chan)
+        print('stim ', seg_end, seg_start, stim_chan)
+        return stim_chan
 
     def moving_average(self, l, avg=True, norm=False, p=False, rmzero=True, initval=10):
         a = []
