@@ -59,9 +59,9 @@ def psd_idx_plot(ax, PSDs, band, location, subject):
     ax[x, y].cla()
     xvals = np.arange(1, len(PSDs) + 1)
     ax[x, y].bar(xvals, PSDs, width=0.4, color='orange')
-    for i, v in enumerate(PSDs):
-        if v != 0.:
-            ax[x, y].text(i + 1 - .2, v - .4, str(round(v, 2)))
+    # for i, v in enumerate(PSDs):
+    #     if v != 0.:
+    #         ax[x, y].text(i + 1 - .2, v - .4, str(round(v, 2)))
     ax[x, y].set(title='Average PSDs Subject {0} Band {1}'.format(subject, band), xlabel='Segment #', ylabel='Power Density (dB)')
     return ax
 
