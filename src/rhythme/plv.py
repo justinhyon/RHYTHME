@@ -137,9 +137,9 @@ def plv_idx_plot(ax, PLV_list, location, name):
     xval = np.arange(1, len(PLV_list) + 1)
     ax[x, y].bar(xval, PLV_list, width=0.4, color='blue')  # index for plv intra 1
 
-    for i, v in enumerate(PLV_list):  # adds labels to bars
-        if v != 0.:
-            ax[x, y].text(i + 1 - .2, v, str(round(v, 2)))
+    # for i, v in enumerate(PLV_list):  # adds labels to bars
+    #     if v != 0.:
+    #         ax[x, y].text(i + 1 - .2, v, str(round(v, 2)))
     ax[x, y].set(title='{} Values'.format(name), xlabel='Segment #', ylabel='PLV Value', ylim=(0, 1))
 
     # ax[1, 1].cla()

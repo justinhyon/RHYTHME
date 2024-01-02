@@ -6,7 +6,7 @@ Adafruit_MCP4725 dac;
 
 const int ledPin = 6;
 
-const float freq = 30.;
+const float freq = 10.;
 float lenSig = .5;
 
 const int HANDSHAKE = 0;

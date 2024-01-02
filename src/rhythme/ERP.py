@@ -1,6 +1,6 @@
 import statistics
 def ERP(raw, ERPlist, exB_ERPlist, exE_ERPlist, ERPxvallist, fsample, blocksize, channelofint, epoeventval,
-        pretrig, posttrig, stim_values, segment, bands, signs):
+        pretrig, posttrig, stim_values, segment, bands, signs, filterband):
     import numpy as np
 
     if epoeventval in stim_values:
@@ -15,7 +15,7 @@ def ERP(raw, ERPlist, exB_ERPlist, exE_ERPlist, ERPxvallist, fsample, blocksize,
                 .format(len(indexes), epoeventval, indexes))
 
         # band pass filter
-        raw = raw.copy().filter(l_freq=3.0, h_freq=7.0, picks=None, filter_length='auto', l_trans_bandwidth='auto',
+        raw = raw.copy().filter(l_freq=filterband[0], h_freq=filterband[1], picks=None, filter_length='auto', l_trans_bandwidth='auto',
                                 h_trans_bandwidth='auto', n_jobs=1, method='iir', iir_params=None, phase='zero',
                                 fir_window='hamming', fir_design='firwin',
                                 skip_by_annotation=('edge', 'bad_acq_skip'), pad='reflect_limited', verbose=None)
@@ -238,9 +238,9 @@ def ERP_idx_plot(ax, participant, ERPlist, ERPxvallist, exB_ERPlist, exE_ERPlist
     ax[x, y ].bar(exB_ERPlist, markheight, width=0.2, alpha=.5)
     ax[x, y ].bar(exE_ERPlist, -1*markheight, width=0.2, alpha=.5)
     # ax[0, y + 1].axis(xmin=-3)
-    for i, v in zip(ERPxvallist, ERPs):
-        if v != 0.:
-            ax[x, y ].text(i - .5, v, str(round(v, 10)))
+    # for i, v in zip(ERPxvallist, ERPs):
+    #     if v != 0.:
+    #         ax[x, y ].text(i - .5, v, str(round(v, 10)))
     ax[x, y ].hlines(0, 0, segment)
     ax[x, y ].set_title('Subject {} ERP Peak Amplitude Index'.format(participant + 1))
     ax[x, y ].set_xlabel('Segment #')
