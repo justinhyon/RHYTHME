@@ -5,10 +5,11 @@ print_output = false
 
 blocksize_sec = 5
 units = "v"
-fsample = 256
+fsample = 2048
 resample_freq = 256
+filter_data_range = [3,120]
 
-nchansparticipant = 128
+nchansparticipant = 64
 numparticipants = 2
 
 removefirstsample = true
@@ -46,7 +47,7 @@ badchans = [
 ]
 TrigChan = 256
 
-filepath = "non-python/data/170719_TRIAL2__EM_MD.set"
+filepath = "non-python/data/Testdata20240102-3.bdf"
 
 num_plvsimevents = 5
 channelofint_plv = 0
@@ -73,6 +74,7 @@ channelofint = [
 epoeventval = 5
 pretrig = 0.3
 posttrig = 0.5
+filter_range = [8.0, 12.0]
 bands = [
     [
         0.11,
@@ -135,6 +137,7 @@ signs = [
     "+",
     "-",
 ]
+filter_range = [8.0, 12.0]
 plotwv = "experiment"
 plotidx = "experiment"
 

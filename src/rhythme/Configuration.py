@@ -46,6 +46,7 @@ def run_rhythme(config_filepath, offline_filepath=None):
     numparticipants = general_config['numparticipants']
     removefirstsample = general_config['removefirstsample']
     resample_freq = general_config['resample_freq']
+    filter_data_range = general_config['filter_data_range']
 
     # plotting configurations
     plotpref = general_config[
@@ -91,7 +92,6 @@ def run_rhythme(config_filepath, offline_filepath=None):
     # configurations for offline mode (ignored in realtime mode)
     if offline_filepath:
         filepath = offline_filepath
-
     else:
         filepath = general_config['filepath']  # path to the  bdf data file
     fsample = general_config['fsample']  # samples per second
@@ -486,5 +486,6 @@ def run_rhythme(config_filepath, offline_filepath=None):
                       sub_plot_matrix=np.zeros(sub_plot_dims),
                       channelnames=channelnames,
                       start_zero=start_zero,
-                      resample_freq=resample_freq),
+                      resample_freq=resample_freq,
+                      filter_data_range=filter_data_range),
     sys.stdout = sys.__stdout__

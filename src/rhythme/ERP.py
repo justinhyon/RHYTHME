@@ -1,6 +1,6 @@
 import statistics
 def ERP(raw, ERPlist, exB_ERPlist, exE_ERPlist, ERPxvallist, fsample, blocksize, channelofint, epoeventval,
-        pretrig, posttrig, stim_values, segment, bands, signs):
+        pretrig, posttrig, stim_values, segment, bands, signs, filter_range):
     import numpy as np
 
     if epoeventval in stim_values:
@@ -15,10 +15,11 @@ def ERP(raw, ERPlist, exB_ERPlist, exE_ERPlist, ERPxvallist, fsample, blocksize,
                 .format(len(indexes), epoeventval, indexes))
 
         # band pass filter
-        raw = raw.copy().filter(l_freq=3.0, h_freq=7.0, picks=None, filter_length='auto', l_trans_bandwidth='auto',
-                                h_trans_bandwidth='auto', n_jobs=1, method='iir', iir_params=None, phase='zero',
-                                fir_window='hamming', fir_design='firwin',
-                                skip_by_annotation=('edge', 'bad_acq_skip'), pad='reflect_limited', verbose=None)
+        if filter_range:
+            raw = raw.copy().filter(l_freq=filter_range[0], h_freq=filter_range[1], picks=None, filter_length='auto', l_trans_bandwidth='auto',
+                                    h_trans_bandwidth='auto', n_jobs=1, method='iir', iir_params=None, phase='zero',
+                                    fir_window='hamming', fir_design='firwin',
+                                    skip_by_annotation=('edge', 'bad_acq_skip'), pad='reflect_limited', verbose=None)
         # Add stim channel back in
         # info_stim = mne.create_info(['stim'], sfreq=fSamp, ch_types=['stim'])
         # raw_stim = RawArray(np.asarray(stim_values).reshape(1, len(stim_values)), info_stim)

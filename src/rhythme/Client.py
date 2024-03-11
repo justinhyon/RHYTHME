@@ -67,19 +67,19 @@ class RHYTHME:
     def master_control(self, filepath, badchans, fsample, nchansparticipant, trigchan, blocksize_sec, num_plvsimevents,
                        option, delay, units,
                        remfirstsample, exp_name, ignore_overflow, n_skipped_segs, wait_segs, function_dict, numparticipants,
-                       ex_plot_matrix, sub_plot_matrix, channelnames, start_zero, resample_freq):
+                       ex_plot_matrix, sub_plot_matrix, channelnames, start_zero, resample_freq, filter_data_range):
         self.option = option
 
         if self.option == 'offline':
             self.offline_process(filepath, badchans, fsample, nchansparticipant, trigchan, blocksize_sec,
                                  num_plvsimevents, units, remfirstsample,
                                  function_dict, numparticipants, channelnames, ex_plot_matrix,
-                                 sub_plot_matrix, resample_freq)
+                                 sub_plot_matrix, resample_freq, filter_data_range)
         elif self.option == "realtime":
             self.realtime_process(delay, badchans, nchansparticipant, trigchan, blocksize_sec, num_plvsimevents, units,
                                   remfirstsample,
                                   exp_name, ignore_overflow, n_skipped_segs, wait_segs, function_dict, ex_plot_matrix,
-                                  sub_plot_matrix, numparticipants, channelnames, start_zero, resample_freq)
+                                  sub_plot_matrix, numparticipants, channelnames, start_zero, resample_freq, filter_data_range)
         else:
             print('invalid setting option selected')
             sys.exit(1)
@@ -87,7 +87,7 @@ class RHYTHME:
     def realtime_process(self, delay, badchans, nchansparticipant, trigchan,blocksize_sec, num_plvsimevents, units,
                          remfirstsample, exp_name, ignore_overflow,
                          n_skipped_segs, wait_segs, function_dict, ex_plot_matrix,
-                         sub_plot_matrix, numparticipants, channelnames, start_zero, resample_freq):
+                         sub_plot_matrix, numparticipants, channelnames, start_zero, resample_freq, filter_data_range):
 
         '''
         numparticipants         number of participants
@@ -278,7 +278,7 @@ class RHYTHME:
                             print("FATAL: fewer channel names lists than number of participants. Check channelnames, "
                                   "numparticipants, nchansparticipant")
                             exit(1)
-                        raw = self.preprocess_raw(raw, badchans[i])
+                        raw = self.preprocess_raw(raw, badchans[i], filter_data_range)
                         participant_raws.append(raw)
                         print('Sub Data shape (nChannels, nSamples): {0} for participant {1}'.format(participant.shape,
                                                                                                      i + 1))
@@ -403,7 +403,9 @@ class RHYTHME:
                             stim_values=stimvals,
                             segment=self.segment,
                             bands=function_dict[keyname]['bands'],
-                            signs=function_dict[keyname]['signs'])
+                            signs=function_dict[keyname]['signs'],
+                            filter_range=function_dict[keyname]['filter_range']
+                            )
 
                     if self.plotpref != 'none':
                         plot_settings = self.plot_settings(function_dict[keyname]['plotwv'], ex_plot_matrix,
@@ -653,7 +655,8 @@ class RHYTHME:
 
     def offline_process(self, filepath, badchans, fsample, nchansparticipant, trigchan, blocksize_sec,
                         num_plvsimevents, units, remfirstsample,
-                        function_dict, numparticipants, channelnames, ex_plot_matrix, sub_plot_matrix, resample_freq):
+                        function_dict, numparticipants, channelnames, ex_plot_matrix, sub_plot_matrix, resample_freq,
+                        filter_data_range):
 
         '''
         numparticipants         number of participants
@@ -790,7 +793,7 @@ class RHYTHME:
                             print("FATAL: fewer channel names lists than number of participants. Check channelnames, "
                                   "numparticipants, nchansparticipant")
                             exit(1)
-                        raw = self.preprocess_raw(raw, badchans[i])
+                        raw = self.preprocess_raw(raw, badchans[i], filter_data_range)
                         participant_raws.append(raw)
                         print('Sub Data shape (nChannels, nSamples): {0} for participant {1}'.format(participant.shape,
                                                                                                      i + 1))
@@ -1395,10 +1398,17 @@ class RHYTHME:
 
         return raw
 
-    def preprocess_raw(self, raw_data, badchans):
+    def preprocess_raw(self, raw_data, badchans, filter_range):
         raw = raw_data
         raw.set_eeg_reference(ref_channels='average', ch_type='eeg', projection=False)
         raw.info['bads'] = badchans
+
+        raw = raw.copy().filter(l_freq=filter_range[0], h_freq=filter_range[1], picks=None, filter_length='auto',
+                                l_trans_bandwidth='auto',
+                                h_trans_bandwidth='auto', n_jobs=1, method='iir', iir_params=None, phase='zero',
+                                fir_window='hamming', fir_design='firwin',
+                                skip_by_annotation=('edge', 'bad_acq_skip'), pad='reflect_limited', verbose=None)
+
         montage = mne.channels.make_standard_montage('biosemi128')
         raw_montage = raw.copy().set_montage(montage, match_case=False)
         interp = raw_montage.copy().pick_types(eeg=True, exclude=()).interpolate_bads(reset_bads=True)
