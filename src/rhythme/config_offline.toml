@@ -9,7 +9,7 @@ fsample = 2048
 resample_freq = 256
 filter_data_range = [3,120]
 
-nchansparticipant = 64
+nchansparticipant = 128
 numparticipants = 2
 
 removefirstsample = true

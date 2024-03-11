@@ -95,4 +95,4 @@ if __name__ == "__main__":
         d.getFeedback( u3.PortStateWrite(State = [baseline_voltage, 0x00, 0x00], WriteMask = [0xff, 0x00, 0x00] ) )
         # s.getFeedback( u3.PortStateWrite(State = [baseline_voltage, 0x00, 0x00], WriteMask = [0xff, 0x00, 0x00] ) )
 
-        time.sleep(2)
+        time.sleep(5)

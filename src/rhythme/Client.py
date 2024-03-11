@@ -25,7 +25,7 @@ import copy
 import numpy as np
 from statistics import mean
 import mne
-from mne.io import RawArray, read_raw_bdf, read_raw_eeglab
+from mne.io import RawArray, read_raw_bdf, read_raw_eeglab, read_raw_gdf
 from mne.preprocessing import ICA
 from mne_connectivity import spectral_connectivity_epochs
 from mne.time_frequency import psd_array_welch, psd_array_multitaper
@@ -213,15 +213,15 @@ class RHYTHME:
 
                 ev = self.ftc.getEvents()#index=(prevsamp, currentsamp - 1))
                 # print("EVENTS: ", ev)
-                # for this_ev in ev:
-                #     print(this_ev.sample)
+                for this_ev in ev:
+                    print(this_ev.sample)
                 # print("Last Event: ", ev_last)
 
                 # if trigchan == 'create':
                 #
                 #     gen_stim_channel = self.create_stim_channel(ev, prevsamp, currentsamp)
 
-                prevsamp = currentsamp
+                
 
                 print('Samples retrieved for segment: ' + str(self.segment))
                 # print(segmentdata)
@@ -257,6 +257,8 @@ class RHYTHME:
                     "INVALID OPTION FOR TrigChan"
                     exit(1)
                 print('Data shape (nChannels, nSamples): {}'.format(segmentdata.shape))
+
+                prevsamp = currentsamp
                 participant_data = []
                 idx = 0
                 while idx < segmentdata.shape[0]:
@@ -299,6 +301,8 @@ class RHYTHME:
                     idx += 1
 
                 # Preprocessing got rid of the stim channel, so now we add the stim channel back in
+                print(stimvals)
+                print(raw._data[-1])
                 info_stim = mne.create_info(['stim'], sfreq=fsample, ch_types=['stim'])
                 raw_stim = RawArray(np.asarray(stimvals).reshape(1, len(stimvals)), info_stim)
                 raw = raw.add_channels([raw_stim], force_update_info=True)
@@ -404,8 +408,7 @@ class RHYTHME:
                             segment=self.segment,
                             bands=function_dict[keyname]['bands'],
                             signs=function_dict[keyname]['signs'],
-                            filter_range=function_dict[keyname]['filter_range']
-                            )
+                            filter_range=function_dict[keyname]['filter_range'])
 
                     if self.plotpref != 'none':
                         plot_settings = self.plot_settings(function_dict[keyname]['plotwv'], ex_plot_matrix,
@@ -679,6 +682,8 @@ class RHYTHME:
             fullraw = read_raw_bdf(filepath, preload=True)
         if filepath.endswith('.set'):
             fullraw = read_raw_eeglab(filepath, preload=True)
+        if filepath.endswith('.gdf'):
+            fullraw = read_raw_gdf(filepath, preload=True)
 
         fulldata = fullraw._data
         if type(trigchan) == int:
@@ -748,7 +753,7 @@ class RHYTHME:
                     self.stim_idx = str(self.TrigChan)
 
                     if any(stimvals):
-                        stimvals = stimvals * 1000000
+                        stimvals = stimvals / 1000000
                         # if units == "mv":
                         #     stimvals = stimvals * 1000
                         # elif units == "uv":
@@ -918,7 +923,8 @@ class RHYTHME:
                             stim_values=stimvals,
                             segment=self.segment,
                             bands=function_dict[keyname]['bands'],
-                            signs=function_dict[keyname]['signs'])
+                            signs=function_dict[keyname]['signs'],
+                            filter_range=function_dict[keyname]['filter_range'])
 
                     if self.plotpref != 'none':
                         plot_settings = self.plot_settings(function_dict[keyname]['plotwv'], ex_plot_matrix,
@@ -1469,8 +1475,8 @@ class RHYTHME:
         for n, loc in enumerate(event_locations):
             stim_chan[loc-1] = event_values[n]
 
-        print(stim_chan)
-        return(stim_chan)
+        print('stim ', event_locations, event_values, stim_chan)
+        return stim_chan
 
     def moving_average(self, l, avg=True, norm=False, p=False, rmzero=True, initval=10):
         a = []
