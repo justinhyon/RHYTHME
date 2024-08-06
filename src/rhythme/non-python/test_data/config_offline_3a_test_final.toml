@@ -1,0 +1,479 @@
+[general_config]
+option = "offline"
+savepath = "non-python/results_3ap_new"
+print_output = false
+
+blocksize_sec = 1.5
+units = "uv"
+fsample = 256
+resample_freq = 256
+filter_data_range = [0.5, 120.0]
+
+nchansparticipant = 128
+numparticipants = 2
+
+removefirstsample = true
+start_zero = true
+dataport = 1972
+ignore_overflow = false
+n_skipped_segs = 1
+wait_segs = 2
+delay = 0.01
+
+filepath = "/Users/justinhyon/Documents/GitHub/RHYTHME/src/rhythme/non-python/test_data/3A_test_data.set"
+
+plotpref = "none"
+show_plots = false
+saving = false
+exp_name = "test_3b"
+ex_windowsize = [
+    24,
+    12,
+]
+sub_windowsize = [
+    36,
+    12,
+]
+ex_plot_dims = [
+    3,
+    4,
+]
+sub_plot_dims = [
+    2,
+    3,
+]
+
+badchans = [
+    ['A32', 'B2'] ,
+    [],
+]
+TrigChan = 256
+
+num_plvsimevents = 5
+channelofint_plv = 0
+frqofint = 0
+
+[function_dict.plv]
+frqofint = [0.5, 50.0]
+intra_avg = false
+plot_option = "experiment"
+values_inter = []
+plot_matrix = "experiment"
+plot_inter = "experiment"
+values_intra1 = []
+plot_intra1 = "experiment"
+values_intra2 = []
+plot_intra2 = "experiment"
+
+[function_dict.ERP1]
+values_ERP = []
+calc_method = "bands"
+mean = true
+channelofint = [
+    1,
+    2,
+    3,
+    33,
+    34,
+    52,
+    65,
+    66,
+    87,
+    97,
+    98,
+    110,
+    111,
+    112,
+]
+epoeventval = 5
+pretrig = 0.5
+posttrig = 1.0
+filter_range = [2.0, 7.0]
+bands = [
+    [
+        0.11,
+        0.15,
+    ],
+    [
+        0.21,
+        0.25,
+    ],
+    [
+        0.31,
+        0.35,
+    ],
+]
+signs = [
+    "-",
+    "+",
+    "-",
+]
+plotwv = "experiment"
+plotidx = "experiment"
+plot_heatmap_colorbar = "participant"
+
+[function_dict.ERP2]
+values_ERP = []
+calc_method = "bands"
+mean = true
+channelofint = [
+    129,
+    130,
+    131,
+    161,
+    162,
+    180,
+    193,
+    194,
+    215,
+    225,
+    226,
+    238,
+    239,
+    240,
+]
+epoeventval = 5
+pretrig = 0.5
+posttrig = 1.0
+bands = [
+    [
+        0.11,
+        0.15,
+    ],
+    [
+        0.21,
+        0.25,
+    ],
+    [
+        0.31,
+        0.35,
+    ],
+]
+signs = [
+    "-",
+    "+",
+    "-",
+]
+filter_range = [2.0, 7.0]
+plotwv = "experiment"
+plotidx = "experiment"
+plot_heatmap_colorbar = "participant"
+
+
+[function_dict.psd1]
+values_band1 = []
+channelofint_band1 = [
+       116, 117, 119, 126
+]
+foilow_band1 = 7
+foihigh_band1 = 11
+plotwv_band1 = "experiment"
+plotidx_band1 = "experiment"
+values_band2 = []
+channelofint_band2 = [
+    116, 117, 119, 126
+]
+foilow_band2 = 12
+foihigh_band2 = 29
+plotwv_band2 = "none"
+plotidx_band2 = "none"
+values_band3 = []
+channelofint_band3 = [
+        116, 117, 119, 126
+]
+foilow_band3 = 30
+foihigh_band3 = 119
+plotwv_band3 = "none"
+plotidx_band3 = "none"
+
+
+[function_dict.psd2]
+values_band1 = []
+channelofint_band1 = [
+        244, 245, 247, 254
+]
+foilow_band1 = 7
+foihigh_band1 = 11
+plotwv_band1 = "experiment"
+plotidx_band1 = "experiment"
+values_band2 = []
+channelofint_band2 = [
+    244, 245, 247, 254
+]
+foilow_band2 = 12
+foihigh_band2 = 29
+plotwv_band2 = "none"
+plotidx_band2 = "none"
+values_band3 = []
+channelofint_band3 = [
+    244, 245, 247, 254
+]
+foilow_band3 = 30
+foihigh_band3 = 119
+plotwv_band3 = "none"
+plotidx_band3 = "none"
+
+
+
+[channelnames_dict]
+channelnames = [
+    [
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "A6",
+        "A7",
+        "A8",
+        "A9",
+        "A10",
+        "A11",
+        "A12",
+        "A13",
+        "A14",
+        "A15",
+        "A16",
+        "A17",
+        "A18",
+        "A19",
+        "A20",
+        "A21",
+        "A22",
+        "A23",
+        "A24",
+        "A25",
+        "A26",
+        "A27",
+        "A28",
+        "A29",
+        "A30",
+        "A31",
+        "A32",
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6",
+        "B7",
+        "B8",
+        "B9",
+        "B10",
+        "B11",
+        "B12",
+        "B13",
+        "B14",
+        "B15",
+        "B16",
+        "B17",
+        "B18",
+        "B19",
+        "B20",
+        "B21",
+        "B22",
+        "B23",
+        "B24",
+        "B25",
+        "B26",
+        "B27",
+        "B28",
+        "B29",
+        "B30",
+        "B31",
+        "B32",
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7",
+        "C8",
+        "C9",
+        "C10",
+        "C11",
+        "C12",
+        "C13",
+        "C14",
+        "C15",
+        "C16",
+        "C17",
+        "C18",
+        "C19",
+        "C20",
+        "C21",
+        "C22",
+        "C23",
+        "C24",
+        "C25",
+        "C26",
+        "C27",
+        "C28",
+        "C29",
+        "C30",
+        "C31",
+        "C32",
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10",
+        "D11",
+        "D12",
+        "D13",
+        "D14",
+        "D15",
+        "D16",
+        "D17",
+        "D18",
+        "D19",
+        "D20",
+        "D21",
+        "D22",
+        "D23",
+        "D24",
+        "D25",
+        "D26",
+        "D27",
+        "D28",
+        "D29",
+        "D30",
+        "D31",
+        "D32",
+    ],
+        [
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "A6",
+        "A7",
+        "A8",
+        "A9",
+        "A10",
+        "A11",
+        "A12",
+        "A13",
+        "A14",
+        "A15",
+        "A16",
+        "A17",
+        "A18",
+        "A19",
+        "A20",
+        "A21",
+        "A22",
+        "A23",
+        "A24",
+        "A25",
+        "A26",
+        "A27",
+        "A28",
+        "A29",
+        "A30",
+        "A31",
+        "A32",
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6",
+        "B7",
+        "B8",
+        "B9",
+        "B10",
+        "B11",
+        "B12",
+        "B13",
+        "B14",
+        "B15",
+        "B16",
+        "B17",
+        "B18",
+        "B19",
+        "B20",
+        "B21",
+        "B22",
+        "B23",
+        "B24",
+        "B25",
+        "B26",
+        "B27",
+        "B28",
+        "B29",
+        "B30",
+        "B31",
+        "B32",
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7",
+        "C8",
+        "C9",
+        "C10",
+        "C11",
+        "C12",
+        "C13",
+        "C14",
+        "C15",
+        "C16",
+        "C17",
+        "C18",
+        "C19",
+        "C20",
+        "C21",
+        "C22",
+        "C23",
+        "C24",
+        "C25",
+        "C26",
+        "C27",
+        "C28",
+        "C29",
+        "C30",
+        "C31",
+        "C32",
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10",
+        "D11",
+        "D12",
+        "D13",
+        "D14",
+        "D15",
+        "D16",
+        "D17",
+        "D18",
+        "D19",
+        "D20",
+        "D21",
+        "D22",
+        "D23",
+        "D24",
+        "D25",
+        "D26",
+        "D27",
+        "D28",
+        "D29",
+        "D30",
+        "D31",
+        "D32",
+    ],

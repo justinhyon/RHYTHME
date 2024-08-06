@@ -1,6 +1,6 @@
 [general_config]
 option = "offline"
-savepath = "non-python/ERP_avg_peak_plots2"
+savepath = "non-python/ERP_test_plots"
 print_output = false
 
 blocksize_sec = 5
@@ -20,12 +20,15 @@ n_skipped_segs = 1
 wait_segs = 2
 delay = 0.01
 
+filepath = "non-python/data/Testdata20240102-3_segraw.fif"
 
-plotpref = "experiment"
+plotpref = "participant"
 show_plots = false
+saving = true
+exp_name = "test_2"
 ex_windowsize = [
     24,
-    12,
+    10,
 ]
 sub_windowsize = [
     36,
@@ -39,16 +42,12 @@ sub_plot_dims = [
     2,
     3,
 ]
-saving = true
-exp_name = "test_2"
 
 badchans = [
     ['A1', 'B2', 'C1', 'C21', 'C23', 'D14', 'D21', 'D31', 'D32'] ,
     [],
 ]
 TrigChan = 256
-
-filepath = "non-python/data/Testdata20240102-3.bdf"
 
 num_plvsimevents = 5
 channelofint_plv = 0
@@ -241,8 +240,10 @@ signs = [
     "+",
     "-",
 ]
-plotwv = "experiment"
+plotwv = "participant"
 plotidx = "experiment"
+plot_heatmap_colorbar = "participant"
+
 
 [function_dict.ERP2]
 values_ERP = []
@@ -420,9 +421,9 @@ signs = [
     "-",
 ]
 filter_range = [8.0, 12.0]
-plotwv = "experiment"
+plotwv = "participant"
 plotidx = "experiment"
-
+plot_heatmap_colorbar = "participant"
 
 [function_dict.psd1]
 values_band1 = []
