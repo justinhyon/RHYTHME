@@ -2,7 +2,7 @@
 currentFile = mfilename( 'fullpath' );
 [pathstr,~,~] = fileparts( currentFile );
 addpath( fullfile( pathstr, 'data' ) );
-cfg.source.dataset = '170719_TRIAL2__EM_MD.set'; %The source of the data is configured as
+cfg.source.dataset = 'data/Testdata20240102-3.bdf'; %The source of the data is configured as
 %cfg.channel        = 1:257;                         % list with channel "names"
 %cfg.maxblocksize   = 5;                             % seconds
 cfg.speed          = 1;                             % Seconds

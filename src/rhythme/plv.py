@@ -1,7 +1,7 @@
 import numpy as np
 import mne
 
-def plv(raw, segment, blocksize, fsample, numblocks, nparticipants, nchansparticipant):
+def plv(raw, segment, blocksize, fsample, numblocks, nparticipants, frqofint, nchansparticipant):
     # import numpy as np
     # import mne
     from mne_connectivity import spectral_connectivity_epochs
@@ -10,12 +10,15 @@ def plv(raw, segment, blocksize, fsample, numblocks, nparticipants, nchanspartic
 
     E, simlen = generate_sim_events(raw, segment, blocksize, fsample,
                                     numblocks)  # Replaces events with equally spaced dummy events to calculate PLV
+    print(-(simlen / fsample) / 2,(simlen / fsample) / 2)
+    print(raw)
+    print(E)
     epochs = mne.Epochs(raw, E, tmin=-(simlen / fsample) / 2, tmax=(simlen / fsample) / 2)
     # print(epochs.get_data())
     # con, freqs, times, n_epochs, n_tapers = spectral_connectivity(epochs, method='plv', sfreq=fSamp, fmin=13.,
     #                                                               fmax=50., n_jobs=6)
-    con_out = spectral_connectivity_epochs(epochs, method='plv', sfreq=fsample, fmin=13.,
-                                                                  fmax=50., n_jobs=1)
+    con_out = spectral_connectivity_epochs(epochs, method='plv', sfreq=fsample, fmin=frqofint[0],
+                                                                  fmax=frqofint[1], n_jobs=1)
     con = con_out.get_data(output='dense')
     # con_out.plot_circle()
     # print(con)
@@ -91,13 +94,13 @@ def generate_sim_events(raw, segment, blocksize, fsample, numblocks):
     # Index at which to start the simulated events
     sim_start = sim_len / 2
     stim = []
-    stim_idxs = np.arange(sim_start, blocksize, sim_len)
+    stim_idxs = np.round(np.arange(sim_start, blocksize, sim_len))
     for idx in np.arange(blocksize):
         if idx in stim_idxs:
             stim.append(1.)
         else:
             stim.append(0.)
-
+    # print(stim_idxs)
     # seg = blocksize / blocksize_sec - 1
     print('Generating {0} simulated events {1} samples apart...'.format(numblocks, sim_len))
 

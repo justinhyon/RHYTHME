@@ -52,6 +52,7 @@ def run_rhythme(config_filepath, offline_filepath=None):
     plotpref = general_config[
         'plotpref']  # use either 'participant'(teamflow score plot), 'experiment'(detailed plot), 'both', or 'none' to
     # toggle showing the plots
+    show_plots = general_config['show_plots']
     ex_windowsize = general_config['ex_windowsize']  # size of the figures
     sub_windowsize = general_config['sub_windowsize']  # size of the figures
     ex_plot_dims = general_config[
@@ -463,7 +464,7 @@ def run_rhythme(config_filepath, offline_filepath=None):
     # if __name__ == '__main__':
     # if not print_output:
     #     sys.stdout = open(os.devnull, 'w')
-    TF = RHYTHME(savepath, dataport, ex_windowsize, sub_windowsize, delay, plotpref, saving, TrigChan, )
+    TF = RHYTHME(savepath, dataport, ex_windowsize, sub_windowsize, delay, plotpref, show_plots, saving, TrigChan, )
 
     TF.master_control(filepath=filepath,
                       badchans=badchans,

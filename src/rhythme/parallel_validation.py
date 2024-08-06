@@ -41,7 +41,7 @@ def worker(id, q, config_file):
     # better to use the while True with SENTINEL
     # other methods such as checking 'q.empty()' may be unreliable.
     while True:
-        file = q.get()
+        file = q.get(timeout=3)
         if file == SENTINEL:
             q.task_done()
             break
@@ -100,14 +100,16 @@ def enablePrint():
 
 
 if __name__ == "__main__":
-    validation_path = "non-python/data_3b_play"
-    config_file = "config_offline_3b.toml"
+    validation_path = "non-python/data_3a_play"
+    config_file = "config_offline_3a_parallel.toml"
 
     format = "%(asctime)s: %(message)s"
     logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
 
     files = [validation_path + '/' + f for f in listdir(validation_path) if
              (isfile(join(validation_path, f)) and f.endswith(".set"))]
+
+
 
     files.append(files[0])  # temporary
     print('files to be run:')
