@@ -223,7 +223,7 @@ def ERP_plot(ax, data, participant, fsample, ERPlist, pretrig, posttrig, segment
     ax[x, y].cla()  # clears the axes to prepare for new data
     # ax[x, y + 1].cla()
     xval = np.arange((-1 * pretrig), posttrig, (posttrig + pretrig) / np.round(
-        (posttrig + pretrig) * fsample))  # generate x axis values (time)
+        (posttrig + pretrig) * fsample))[0:-1]  # generate x axis values (time)
     heatmap = None
     if mean:
         # plots standard deviation if data is not 0
@@ -232,6 +232,7 @@ def ERP_plot(ax, data, participant, fsample, ERPlist, pretrig, posttrig, segment
 
             dat = data.mean(axis=0)#[:-1]
             # print(data.shape,xval.shape,dat.shape,sdERPamp.shape)
+            print(len(xval), len(dat), len(sdERPamp))
             ax[x, y].fill_between(xval, dat + sdERPamp, dat - sdERPamp, facecolor='red', alpha=0.3)
 
         # plots the data against time

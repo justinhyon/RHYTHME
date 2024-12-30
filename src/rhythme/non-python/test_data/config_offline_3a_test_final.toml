@@ -1,6 +1,6 @@
 [general_config]
 option = "offline"
-savepath = "non-python/results_3ap_new"
+savepath = "/Users/justinhyon/Documents/GitHub/RHYTHME/src/rhythme/non-python/test_data"
 print_output = false
 
 blocksize_sec = 1.5
